@@ -31,28 +31,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const initSession = async () => {
       const savedToken = localStorage.getItem('token');
-      const savedUser = localStorage.getItem('user');
       const savedCompany = localStorage.getItem('company');
 
-      if (savedToken && savedUser) {
+      if (savedToken) {
         try {
-          const parsedUser = JSON.parse(savedUser);
-          const parsedCompany = savedCompany ? JSON.parse(savedCompany) : null;
-          setUser(parsedUser);
-          setCompany(parsedCompany);
-
-          // Connect real-time socket
-          socketService.connect();
-          if (parsedCompany?._id) {
-            socketService.joinWorkspace(parsedCompany._id);
+          // Verify token against server
+          const meRes = await api.get('/auth/me');
+          if (meRes.data?.user) {
+            setUser(meRes.data.user);
+            setCompany(meRes.data.company || (savedCompany ? JSON.parse(savedCompany) : null));
+            socketService.connect();
+            if (meRes.data.company?._id) {
+              socketService.joinWorkspace(meRes.data.company._id);
+            }
+            setLoading(false);
+            return;
           }
-        } catch (e) {
-          console.error('Failed to parse cached session', e);
+        } catch {
+          // Token expired or server was reseeded, re-login
         }
-      } else {
-        // Automatically login as Company Admin on fresh start
-        await quickLoginAs('COMPANY_ADMIN');
       }
+
+      // Automatically login as Company Admin on fresh start / reseed
+      await quickLoginAs('COMPANY_ADMIN');
       setLoading(false);
     };
 

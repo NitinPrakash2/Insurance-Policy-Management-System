@@ -20,7 +20,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: { sub: string; email: string; role: string; companyId?: string }) {
-    const user = await this.userModel.findById(payload.sub).select('-passwordHash');
+    let user: any = null;
+    try {
+      user = await this.userModel.findById(payload.sub).select('-passwordHash');
+    } catch {}
+
+    if (!user && payload.email) {
+      user = await this.userModel.findOne({ email: payload.email.toLowerCase() }).select('-passwordHash');
+    }
+
     if (!user || user.status === UserStatus.INACTIVE) {
       throw new UnauthorizedException('User account is inactive or not found');
     }
