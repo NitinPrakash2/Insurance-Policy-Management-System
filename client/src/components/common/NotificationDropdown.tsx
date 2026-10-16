@@ -58,8 +58,8 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'notif-5',
     type: 'system',
-    title: 'Real-Time Sync Active',
-    description: 'Connected to Shree Insurance Advisors workspace real-time stream.',
+    title: 'Workspace Synchronized',
+    description: 'All policy records and customer ledgers are up to date.',
     time: 'Today',
     unread: false,
   },
@@ -306,16 +306,13 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
       {/* Footer */}
       {filteredNotifs.length > 0 && (
-        <div className="p-2.5 bg-[#FAF8F5] border-t border-[#EAE4D8] flex items-center justify-between text-[11px] text-[#7A8696] px-4">
+        <div className="p-2.5 bg-[#FAF8F5] border-t border-[#EAE4D8] flex items-center justify-end text-[11px] text-[#7A8696] px-4">
           <button
             onClick={clearAll}
             className="hover:text-rose-600 transition font-medium"
           >
             Clear all
           </button>
-          <span className="text-[10px] text-[#A0AAB7]">
-            Real-time feed via WebSockets
-          </span>
         </div>
       )}
     </div>
