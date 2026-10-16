@@ -23,6 +23,7 @@ import {
 import { workspaceService } from '../../services/workspaceService';
 import { socketService } from '../../services/socket';
 import { useAuth } from '../../context/AuthContext';
+import { Dropdown } from '../common/Dropdown';
 
 interface CompanyAdminPanelProps {
   currentSection: string;
@@ -1104,49 +1105,35 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Customer</label>
-                <select
-                  value={newPolicy.customerId}
-                  onChange={(e) => setNewPolicy({ ...newPolicy, customerId: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                >
-                  {customers.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.name} ({c.phone})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Dropdown
+                label="Customer"
+                value={newPolicy.customerId}
+                onChange={(val) => setNewPolicy({ ...newPolicy, customerId: val })}
+                options={customers.map((c) => ({
+                  value: c._id,
+                  label: c.name,
+                  sublabel: c.phone,
+                }))}
+                placeholder="Select Customer"
+              />
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Insurer</label>
-                  <select
-                    value={newPolicy.insurerId}
-                    onChange={(e) => setNewPolicy({ ...newPolicy, insurerId: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                  >
-                    {insurers.map((ins) => (
-                      <option key={ins._id} value={ins._id}>
-                        {ins.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Line / Type</label>
-                  <select
-                    value={newPolicy.type}
-                    onChange={(e) => setNewPolicy({ ...newPolicy, type: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                  >
-                    <option>Motor</option>
-                    <option>Health</option>
-                    <option>Life</option>
-                    <option>Commercial</option>
-                  </select>
-                </div>
+                <Dropdown
+                  label="Insurer"
+                  value={newPolicy.insurerId}
+                  onChange={(val) => setNewPolicy({ ...newPolicy, insurerId: val })}
+                  options={insurers.map((ins) => ({
+                    value: ins._id,
+                    label: ins.name,
+                  }))}
+                  placeholder="Select Insurer"
+                />
+                <Dropdown
+                  label="Line / Type"
+                  value={newPolicy.type}
+                  onChange={(val) => setNewPolicy({ ...newPolicy, type: val })}
+                  options={['Motor', 'Health', 'Life', 'Commercial']}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1225,17 +1212,15 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Role</label>
-                  <select
-                    value={newEmployee.role}
-                    onChange={(e) => setNewEmployee({ ...newEmployee, role: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                  >
-                    <option value="OFFICE_STAFF">Office Staff</option>
-                    <option value="SALESMAN">Salesman / Agent</option>
-                  </select>
-                </div>
+                <Dropdown
+                  label="Role"
+                  value={newEmployee.role}
+                  onChange={(val) => setNewEmployee({ ...newEmployee, role: val })}
+                  options={[
+                    { value: 'OFFICE_STAFF', label: 'Office Staff' },
+                    { value: 'SALESMAN', label: 'Salesman / Agent' },
+                  ]}
+                />
                 <div>
                   <label className="block text-xs font-semibold text-[#1A2533] mb-1">Phone</label>
                   <input
@@ -1276,20 +1261,18 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
               Client: <strong className="text-[#1A2533]">{selectedCustomer?.name || 'Client'}</strong>
             </p>
             <form onSubmit={handleLogCallSubmit} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Call Outcome</label>
-                <select
-                  value={callResult}
-                  onChange={(e) => setCallResult(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                >
-                  <option value="Promise to Pay">Promise to Pay</option>
-                  <option value="Callback Requested">Callback Requested</option>
-                  <option value="Answered / Discussed">Answered / Discussed</option>
-                  <option value="Renewal Confirmed">Renewal Confirmed</option>
-                  <option value="Not Reachable / Busy">Not Reachable / Busy</option>
-                </select>
-              </div>
+              <Dropdown
+                label="Call Outcome"
+                value={callResult}
+                onChange={(val) => setCallResult(val)}
+                options={[
+                  'Promise to Pay',
+                  'Callback Requested',
+                  'Answered / Discussed',
+                  'Renewal Confirmed',
+                  'Not Reachable / Busy',
+                ]}
+              />
               <div>
                 <label className="block text-xs font-semibold text-[#1A2533] mb-1">Conversation Notes</label>
                 <textarea

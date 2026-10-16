@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { workspaceService } from '../../services/workspaceService';
 import { socketService } from '../../services/socket';
+import { Dropdown } from '../common/Dropdown';
 
 interface SalesmanPanelProps {
   currentSection: string;
@@ -518,6 +519,12 @@ export const SalesmanPanel: React.FC<SalesmanPanelProps> = ({ currentSection }) 
                   placeholder="18000"
                 />
               </div>
+              <Dropdown
+                label="Insurance Type"
+                value={newSale.type}
+                onChange={(val) => setNewSale({ ...newSale, type: val })}
+                options={['Motor', 'Health', 'Life', 'Commercial']}
+              />
               <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
                 <button
                   type="button"
