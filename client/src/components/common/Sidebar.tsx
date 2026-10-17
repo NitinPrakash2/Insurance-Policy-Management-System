@@ -139,12 +139,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
     document.title = `ProSurance · ${workspaceSubtitle}`;
   }, [workspaceSubtitle]);
 
+  // Lock background scroll when mobile sidebar drawer is open
+  React.useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  // Close on Escape key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen && onClose) {
+        onClose();
+      }
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   return (
     <>
-      {/* Mobile Drawer Backdrop */}
+      {/* Mobile Drawer Backdrop with Premium Frosted Blur */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-[#1A2533]/50 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-300"
+          className="fixed inset-0 bg-[#1A2533]/35 backdrop-blur-[6px] z-40 lg:hidden transition-all duration-300 animate-in fade-in"
           onClick={onClose}
           aria-hidden="true"
         />

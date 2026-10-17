@@ -429,20 +429,61 @@ export const OfficeStaffPanel: React.FC<OfficeStaffPanelProps> = ({ currentSecti
 
       {/* SECTION 3: POLICIES */}
       {activeSection === 'os-policies' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight font-sans">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight font-sans">
                 Policies
               </h1>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
                 Active policy schedules and records ({policies.length} total).
               </p>
             </div>
           </div>
 
           <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-2xs">
-            <div className="overflow-x-auto">
+            {/* Mobile Cards View (no horizontal scroll) */}
+            <div className="sm:hidden divide-y divide-slate-100">
+              {policies.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 text-xs px-4">
+                  No policy records found.
+                </div>
+              ) : (
+                policies.map((p) => (
+                  <div key={p._id} className="p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-semibold text-xs text-slate-900 font-mono truncate">{p.policyNumber}</div>
+                        <div className="text-[11px] text-slate-500 truncate">{p.customerId?.name || 'Client'}</div>
+                      </div>
+                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider shrink-0 ${
+                        p.status === 'Overdue' ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'
+                      }`}>
+                        {p.status}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-1.5 border-t border-slate-100 text-[11px]">
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase font-medium block">Insurer / Type</span>
+                        <span className="font-medium text-slate-800 truncate block">{p.insurerId?.name || 'Insurer'} • {p.type}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase font-medium block">Premium</span>
+                        <span className="font-semibold text-slate-900">₹{Number(p.premium).toLocaleString('en-IN')}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase font-medium block">Expiry</span>
+                        <span className="font-medium text-slate-700">{new Date(p.expiryDate).toLocaleDateString('en-GB')}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop Table */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 text-slate-500 text-[11px] font-semibold uppercase tracking-wider bg-slate-50/70">

@@ -757,7 +757,52 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
                   Showing {recentPolicies.length} of {safePolicies.length}
                 </span>
               </div>
-              <div className="overflow-x-auto">
+              {/* Mobile View: Clean cards with no horizontal scroll */}
+              <div className="sm:hidden divide-y divide-slate-100">
+                {recentPolicies.length === 0 ? (
+                  <div className="py-8 px-4 text-center text-slate-400 text-xs">
+                    No policies entered yet. Click <strong className="text-slate-700">"New policy"</strong> above to record the first contract.
+                  </div>
+                ) : (
+                  recentPolicies.map((p) => {
+                    const st = getPolicyStatus(p);
+                    const custName = p.customerId?.name || 'Valued Client';
+                    const insCode = p.insurerId?.code || p.insurerId?.name || 'INS';
+                    return (
+                      <div key={p._id} className="p-3 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-mono font-medium text-slate-700">{p.policyNumber || '—'}</span>
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                              st === 'Active'
+                                ? 'bg-[#E1F2ED] text-[#175D4C]'
+                                : st === 'Due Soon'
+                                ? 'bg-[#F5E4CE] text-[#8A4E12]'
+                                : 'bg-[#FBE7E5] text-[#B23A3A]'
+                            }`}
+                          >
+                            {st === 'Active' ? '✓ Active' : st === 'Due Soon' ? '⏰ Due soon' : '✕ Expired'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-semibold text-slate-900 truncate pr-2">{custName}</span>
+                          <span className="font-semibold text-[#0F2947] shrink-0">
+                            ₹{(Number(p.premium) || 0).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 flex items-center gap-1.5">
+                          <span>{insCode}</span>
+                          <span>•</span>
+                          <span>{p.type || 'General'}</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Desktop View: Full Data Table */}
+              <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse min-w-[500px]">
                   <thead>
                     <tr className="bg-[#E7ECF2]/60 border-b border-[#DCE2EA] text-[10px] sm:text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
@@ -976,7 +1021,73 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
                 </span>
               </div>
 
-              <div className="overflow-x-auto">
+              {/* Mobile Cards View (no horizontal scroll) */}
+              <div className="sm:hidden divide-y divide-[#F0EBE1]">
+                {filteredCustomers.length === 0 ? (
+                  <div className="py-10 px-4 text-center text-slate-400 text-xs">
+                    No customer profiles found. Use <strong>"Add Customer"</strong> to create one.
+                  </div>
+                ) : (
+                  filteredCustomers.map((c) => {
+                    const isSelected = selectedCustomerIds.has(c._id);
+                    const initials =
+                      c.name?.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || 'CU';
+                    return (
+                      <div
+                        key={c._id}
+                        className={`p-3 space-y-2 transition ${isSelected ? 'bg-emerald-50/60' : 'bg-white'}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelectCustomer(c._id)}
+                              className="w-4 h-4 rounded border-slate-300 text-[#1F7A64] focus:ring-0 cursor-pointer shrink-0"
+                            />
+                            <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-700 font-semibold text-[11px] flex items-center justify-center shrink-0 border border-slate-200">
+                              {initials}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="font-semibold text-xs text-slate-900 truncate">{c.name}</div>
+                              <div className="font-mono text-[11px] text-slate-600">{c.phone}</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => {
+                                setSelectedCustomer(c);
+                                setShowLogCallModal(true);
+                              }}
+                              className="px-2 py-1 text-[11px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-800 rounded transition cursor-pointer"
+                            >
+                              Follow-up
+                            </button>
+                            <button
+                              onClick={() => setCustomerToDelete({ id: c._id, name: c.name })}
+                              className="p-1 text-slate-400 hover:text-rose-600 rounded transition cursor-pointer"
+                              title={`Delete ${c.name}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 pl-6">
+                          <span className="truncate">{c.email || c.city || 'Pune'}</span>
+                          <span className="font-medium text-slate-700 shrink-0 font-mono">
+                            {c.policyCount ?? 0} {c.policyCount === 1 ? 'policy' : 'policies'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Desktop Table */}
+              <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-[#DCE2EA] text-slate-600 font-mono text-[10px] uppercase tracking-wider bg-[#E7ECF2]/60">
@@ -1189,27 +1300,76 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
       {/* SECTION 3: POLICIES (REAL API DATA)                       */}
       {/* ========================================================= */}
       {activeSection === 'ca-policies' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Policies
               </h1>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1">
                 Active insurance policies and coverage records ({policies.length} total).
               </p>
             </div>
 
             <button
               onClick={() => setShowAddPolicyModal(true)}
-              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs"
+              className="w-full sm:w-auto px-3.5 sm:px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Record New Policy</span>
             </button>
           </div>
 
-          <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-2xs">
+          {/* Mobile Cards View (no horizontal scroll) */}
+          <div className="sm:hidden space-y-2.5">
+            {policies.length === 0 ? (
+              <div className="bg-white border border-slate-200/80 rounded-xl p-6 sm:p-8 text-center shadow-2xs">
+                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400 mb-2">
+                  <Plus className="w-5 h-5 text-slate-400" />
+                </div>
+                <p className="text-xs font-semibold text-slate-800">No policies recorded yet</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">Click "Record New Policy" to add your first contract.</p>
+              </div>
+            ) : (
+              policies.map((p) => (
+                <div key={p._id} className="bg-white border border-slate-200/80 rounded-xl p-3 shadow-2xs space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-xs text-slate-900 font-mono truncate">{p.policyNumber}</div>
+                      <div className="text-[11px] text-slate-500 truncate">{p.customerId?.name || 'Client'}</div>
+                    </div>
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider shrink-0 ${
+                      p.status === 'Overdue' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    }`}>
+                      {p.status}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-[11px]">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-medium block">Insurer / Type</span>
+                      <span className="font-medium text-slate-800 truncate block">{p.insurerId?.name || 'HDFC ERGO'} • {p.type}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-medium block">Premium</span>
+                      <span className="font-semibold text-slate-900">₹{Number(p.premium).toLocaleString('en-IN')}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-medium block">Sum Insured</span>
+                      <span className="font-medium text-slate-700">₹{Number(p.sumInsured || 0).toLocaleString('en-IN')}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-medium block">Expiry</span>
+                      <span className="font-medium text-slate-700">{new Date(p.expiryDate).toLocaleDateString('en-GB')}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden sm:block bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-2xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
@@ -1224,38 +1384,46 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {policies.map((p) => (
-                    <tr key={p._id} className="hover:bg-slate-50/70 transition">
-                      <td className="py-3.5 px-4">
-                        <div className="font-semibold text-slate-900">{p.policyNumber}</div>
-                        <div className="text-[11px] text-slate-500">{p.customerId?.name || 'Client'}</div>
-                      </td>
-                      <td className="py-3.5 px-4 font-medium text-slate-800">
-                        {p.insurerId?.name || 'HDFC ERGO'}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700">
-                          {p.type}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-medium text-slate-700">
-                        ₹ {Number(p.sumInsured || 0).toLocaleString('en-IN')}
-                      </td>
-                      <td className="py-3.5 px-4 font-semibold text-xs text-slate-900">
-                        ₹ {Number(p.premium).toLocaleString('en-IN')}
-                      </td>
-                      <td className="py-3.5 px-4 font-medium text-slate-700">
-                        {new Date(p.expiryDate).toLocaleDateString('en-GB')}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
-                          p.status === 'Overdue' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        }`}>
-                          {p.status}
-                        </span>
+                  {policies.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-10 text-center text-slate-400 text-xs">
+                        No policies recorded yet. Click <strong className="text-slate-700">"Record New Policy"</strong> above to add one.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    policies.map((p) => (
+                      <tr key={p._id} className="hover:bg-slate-50/70 transition">
+                        <td className="py-3.5 px-4">
+                          <div className="font-semibold text-slate-900">{p.policyNumber}</div>
+                          <div className="text-[11px] text-slate-500">{p.customerId?.name || 'Client'}</div>
+                        </td>
+                        <td className="py-3.5 px-4 font-medium text-slate-800">
+                          {p.insurerId?.name || 'HDFC ERGO'}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="inline-block px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700">
+                            {p.type}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 font-medium text-slate-700">
+                          ₹ {Number(p.sumInsured || 0).toLocaleString('en-IN')}
+                        </td>
+                        <td className="py-3.5 px-4 font-semibold text-xs text-slate-900">
+                          ₹ {Number(p.premium).toLocaleString('en-IN')}
+                        </td>
+                        <td className="py-3.5 px-4 font-medium text-slate-700">
+                          {new Date(p.expiryDate).toLocaleDateString('en-GB')}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
+                            p.status === 'Overdue' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}>
+                            {p.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1267,21 +1435,21 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
       {/* SECTION 4: PAYMENTS & EMI RECORDS                         */}
       {/* ========================================================= */}
       {activeSection === 'ca-payments' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Payments & EMI Records
               </h1>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1">
                 Track direct insurer portal payments and broker-collected premium receipts.
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
               <button
                 onClick={() => setPaymentFilter('All')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium transition shrink-0 cursor-pointer ${
                   paymentFilter === 'All' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
                 }`}
               >
@@ -1289,7 +1457,7 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
               </button>
               <button
                 onClick={() => setPaymentFilter('Direct')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium transition shrink-0 cursor-pointer ${
                   paymentFilter === 'Direct' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
                 }`}
               >
@@ -1297,7 +1465,7 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
               </button>
               <button
                 onClick={() => setPaymentFilter('Broker')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium transition shrink-0 cursor-pointer ${
                   paymentFilter === 'Broker' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
                 }`}
               >
@@ -1306,45 +1474,93 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white border border-slate-200/80 rounded-xl p-4 shadow-2xs">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 sm:p-4 shadow-2xs">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                 TOTAL PREMIUM VOLUME
               </span>
-              <div className="mt-2 text-2xl font-bold text-slate-900 font-sans tracking-tight">
+              <div className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold text-slate-900 font-sans tracking-tight">
                 ₹{totalPremiumSum.toLocaleString('en-IN')}
               </div>
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs text-slate-500">
                 Across {policies.length} recorded policies
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200/80 rounded-xl p-4 shadow-2xs">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+            <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 sm:p-4 shadow-2xs">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                 ACTIVE POLICIES
               </span>
-              <div className="mt-2 text-2xl font-bold text-emerald-600 font-sans tracking-tight">
+              <div className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold text-emerald-600 font-sans tracking-tight">
                 {policies.filter((p) => p.status === 'Active').length}
               </div>
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs text-slate-500">
                 Underwritten & confirmed
               </div>
             </div>
 
-            <div className="bg-white border border-slate-200/80 rounded-xl p-4 shadow-2xs">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+            <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 sm:p-4 shadow-2xs">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
                 PAYMENTS PENDING
               </span>
-              <div className="mt-2 text-2xl font-bold text-amber-600 font-sans tracking-tight">
+              <div className="mt-1 sm:mt-2 text-xl sm:text-2xl font-bold text-amber-600 font-sans tracking-tight">
                 {dueTodayPolicies.length}
               </div>
-              <div className="mt-1 text-xs text-slate-500">
+              <div className="mt-0.5 sm:mt-1 text-[11px] sm:text-xs text-slate-500">
                 Requires client follow-up
               </div>
             </div>
           </div>
 
-          <div className="bg-white border border-[#E7E2D6] rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+          {/* Mobile Card View (no horizontal scroll) */}
+          <div className="sm:hidden space-y-2.5">
+            {policies.length === 0 ? (
+              <div className="bg-white border border-[#E7E2D6] rounded-xl p-6 text-center">
+                <p className="text-xs font-semibold text-slate-700">No payment records yet</p>
+                <p className="text-[11px] text-[#8E9AAB] mt-0.5">Policy instalment records will appear here.</p>
+              </div>
+            ) : (
+              policies.map((p, idx) => (
+                <div key={p._id || idx} className="bg-white border border-[#E7E2D6] rounded-xl p-3 shadow-2xs space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-mono font-semibold text-xs text-[#1A2533] truncate">{p.policyNumber}</div>
+                      <div className="text-[11px] text-[#5E6877] truncate">{p.customerId?.name || 'Client'}</div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#EBF5ED] text-[#1E7E34] shrink-0">
+                      Verified Paid
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-[11px]">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-medium block">Underwriter</span>
+                      <span className="font-medium text-slate-800 truncate block">{p.insurerId?.name || 'Insurer'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-medium block">Gross Premium</span>
+                      <span className="font-bold text-[#1A2533]">₹{(Number(p.premium) || 0).toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1 text-[11px]">
+                    <span className="text-[10px] text-[#5E6877]">
+                      {idx % 2 === 0 ? 'Direct to Insurer' : 'Collected by Broker'}
+                    </span>
+                    <button
+                      onClick={() => showToast(`Payment receipt for Policy ${p.policyNumber} confirmed.`, 'success')}
+                      className="px-2.5 py-1 text-[11px] font-semibold bg-[#FAF8F5] border border-[#D5CEBF] rounded text-[#1A2533] hover:bg-[#F2ECE1] cursor-pointer"
+                    >
+                      Receipt
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden sm:block bg-white border border-[#E7E2D6] rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
@@ -1406,21 +1622,21 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
       {/* SECTION 5: RENEWALS & DUE DATES                           */}
       {/* ========================================================= */}
       {activeSection === 'ca-renewals' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Renewals & Due Dates
               </h1>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1">
                 Monitor upcoming policy expirations and scheduled retention dates.
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
               <button
                 onClick={() => setRenewalTimeline('All')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium transition shrink-0 cursor-pointer ${
                   renewalTimeline === 'All' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
                 }`}
               >
@@ -1428,7 +1644,7 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
               </button>
               <button
                 onClick={() => setRenewalTimeline('next7')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium transition shrink-0 cursor-pointer ${
                   renewalTimeline === 'next7' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
                 }`}
               >
@@ -1436,7 +1652,7 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
               </button>
               <button
                 onClick={() => setRenewalTimeline('next30')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-medium transition shrink-0 cursor-pointer ${
                   renewalTimeline === 'next30' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
                 }`}
               >
@@ -1445,7 +1661,65 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
             </div>
           </div>
 
-          <div className="bg-white border border-[#E7E2D6] rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+          {/* Mobile Card View (no horizontal scroll) */}
+          <div className="sm:hidden space-y-2.5">
+            {policies.length === 0 ? (
+              <div className="bg-white border border-[#E7E2D6] rounded-xl p-6 text-center">
+                <p className="text-xs font-semibold text-slate-700">No upcoming expirations recorded</p>
+                <p className="text-[11px] text-[#8E9AAB] mt-0.5">Expiring policy records will appear here.</p>
+              </div>
+            ) : (
+              policies.map((p, idx) => (
+                <div key={p._id || idx} className="bg-white border border-[#E7E2D6] rounded-xl p-3 shadow-2xs space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-semibold text-xs text-[#1A2533] truncate">{p.customerId?.name || 'Client'}</div>
+                      <div className="font-mono text-[11px] text-[#7A8696] truncate">{p.policyNumber}</div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#FAF0EC] text-[#C05D34] shrink-0">
+                      Upcoming Renewal
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-[11px]">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-medium block">Insurer</span>
+                      <span className="font-medium text-slate-800 truncate block">{p.insurerId?.name || 'Insurer'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-medium block">Expiry Date</span>
+                      <span className="font-semibold text-[#C05D34]">
+                        {p.expiryDate ? new Date(p.expiryDate).toLocaleDateString('en-IN') : '2027-03-31'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-medium block">Premium</span>
+                      <span className="font-bold text-[#1A2533]">₹{(Number(p.premium) || 0).toLocaleString('en-IN')}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-medium block">Contact</span>
+                      <span className="text-[11px] text-[#5E6877] font-mono truncate block">{p.customerId?.phone || 'No phone'}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-1 flex justify-end">
+                    <button
+                      onClick={() => {
+                        setSelectedCustomer(p.customerId || customers[0]);
+                        setShowLogCallModal(true);
+                      }}
+                      className="px-3 py-1 text-[11px] font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs cursor-pointer"
+                    >
+                      Log Reminder
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden sm:block bg-white border border-[#E7E2D6] rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
