@@ -32,7 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="w-12 h-12 rounded-full bg-[#FAF0EC] text-[#C05D34] flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-6 h-6" />
             </div>
-            <h2 className="font-serif font-bold text-lg text-[#1A2533] mb-2">
+            <h2 className="font-bold text-lg text-slate-900 mb-2 tracking-tight">
               Something went wrong loading this view
             </h2>
             <p className="text-xs text-[#6F7C8E] mb-4">

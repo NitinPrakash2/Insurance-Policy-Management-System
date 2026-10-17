@@ -34,7 +34,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 w-screen h-screen z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+      className="fixed inset-0 w-screen h-screen z-[9999] flex items-center justify-center p-2.5 sm:p-6 overflow-y-auto"
       style={{ margin: 0 }}
     >
       {/* Soft, premium, glassmorphic backdrop overlay */}
@@ -45,18 +45,18 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Modal Dialog Content */}
       <div
-        className={`relative z-10 bg-white rounded-2xl border border-[#EAE4D8]/80 w-full ${maxWidth} p-6 sm:p-7 shadow-[0_20px_50px_rgba(26,37,51,0.15)] animate-in fade-in zoom-in-95 duration-150`}
+        className={`relative z-10 bg-white rounded-xl sm:rounded-2xl border border-[#EAE4D8]/80 w-full ${maxWidth} max-h-[92vh] overflow-y-auto overflow-x-hidden p-3.5 sm:p-6 shadow-[0_20px_50px_rgba(26,37,51,0.15)] animate-in fade-in zoom-in-95 duration-150`}
       >
         {(title || subtitle) && (
-          <div className="flex items-start justify-between pb-3.5 mb-4 border-b border-[#F0EBE1]">
+          <div className="flex items-start justify-between pb-2.5 sm:pb-3.5 mb-3 sm:mb-4 border-b border-[#F0EBE1]">
             <div>
               {title && (
-                <h3 className="font-serif font-bold text-lg text-[#1A2533] leading-snug">
+                <h3 className="font-bold text-sm sm:text-base text-slate-900 leading-snug tracking-tight">
                   {title}
                 </h3>
               )}
               {subtitle && (
-                <p className="text-xs text-[#7A8696] mt-0.5 leading-normal">
+                <p className="text-[11px] sm:text-xs text-[#7A8696] mt-0.5 leading-normal">
                   {subtitle}
                 </p>
               )}

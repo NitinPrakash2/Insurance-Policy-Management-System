@@ -5,23 +5,13 @@ import {
   ShieldCheck,
   Plus,
   Search,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  Layers,
-  ChevronRight,
-  Shield,
   Activity,
-  FileSpreadsheet,
-  AlertTriangle,
-  Lock,
-  ArrowUpRight,
-  RefreshCw,
   Trash2,
 } from 'lucide-react';
 import { workspaceService } from '../../services/workspaceService';
 import { socketService } from '../../services/socket';
 import { Modal } from '../common/Modal';
+import { DeleteConfirmationModal } from '../common/DeleteConfirmationModal';
 
 interface SuperAdminPanelProps {
   currentSection: string;
@@ -33,11 +23,16 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [platformOverview, setPlatformOverview] = useState<any>(null);
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Dedicated Delete Confirmation State
+  const [companyToDelete, setCompanyToDelete] = useState<{ id: string; name: string; slug: string; maxSlots: number; status: string } | null>(null);
+  const [isDeletingCompany, setIsDeletingCompany] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const [newCompany, setNewCompany] = useState({
     name: '',
     slug: '',
@@ -51,14 +46,12 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
   const loadPlatformData = async () => {
     try {
       setLoading(true);
-      const [cList, logs, overview] = await Promise.all([
+      const [cList, logs] = await Promise.all([
         workspaceService.getCompanies().catch(() => []),
         workspaceService.getAuditLogs().catch(() => []),
-        workspaceService.getPlatformOverview().catch(() => null),
       ]);
       setCompanies(cList);
       setAuditLogs(logs);
-      setPlatformOverview(overview);
     } catch (err) {
       console.error('Failed to load platform data', err);
     } finally {
@@ -136,15 +129,18 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
     }
   };
 
-  const handleDeleteCompany = async (id: string, name: string) => {
-    if (!window.confirm(`Delete company "${name}"? This will permanently remove its tenant workspace.`)) {
-      return;
-    }
+  const confirmDeleteCompany = async () => {
+    if (!companyToDelete) return;
+    setIsDeletingCompany(true);
+    setDeleteError(null);
     try {
-      await workspaceService.deleteCompany(id);
-      setCompanies((prev) => prev.filter((c) => c._id !== id));
+      await workspaceService.deleteCompany(companyToDelete.id);
+      setCompanies((prev) => prev.filter((c) => c._id !== companyToDelete.id));
+      setCompanyToDelete(null);
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to delete company');
+      setDeleteError(err?.response?.data?.message || 'Failed to delete company workspace. Please try again.');
+    } finally {
+      setIsDeletingCompany(false);
     }
   };
 
@@ -160,197 +156,130 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
   const totalSuspended = companies.filter((c) => c.status === 'SUSPENDED').length;
 
   return (
-    <div className="space-y-6 font-sans text-[#1A2533]">
-      {/* Live Stream Indicator */}
-      <div className="flex items-center justify-between text-xs text-[#7A8696] bg-[#FAF8F5] px-3.5 py-1.5 rounded-lg border border-[#EAE5DC]">
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          <span className="font-mono text-[11px] text-[#1E7E34] font-bold">
-            Platform Global Monitor Live
-          </span>
-          <span className="text-[#8E9AAB]">·</span>
-          <span>Tenants Active: <strong>{companies.length}</strong></span>
-        </div>
+    <div className="space-y-6 font-sans text-slate-900">
 
-        <button
-          onClick={loadPlatformData}
-          disabled={loading}
-          className="flex items-center gap-1 text-[#C05D34] font-semibold hover:underline"
-        >
-          <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
-          <span>Refresh Platform</span>
-        </button>
-      </div>
-
-      {/* ========================================================= */}
-      {/* SECTION 1: PLATFORM OVERVIEW                              */}
-      {/* ========================================================= */}
+      {/* SECTION 1: PLATFORM OVERVIEW */}
       {activeSection === 'sa-overview' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
             <div>
-              <div className="text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider font-mono mb-1">
-                PLATFORM SUPER ADMIN / Global console
-              </div>
-              <h1 className="text-3xl font-serif font-bold text-[#1A2533] tracking-tight leading-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight font-sans">
                 Platform Overview
               </h1>
-              <p className="text-xs text-[#6F7C8E] mt-1">
-                Registered tenant organizations: {companies.length} active companies.
+              <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+                Registered broker tenant organizations and slot allocations ({companies.length} active).
               </p>
             </div>
 
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded-md text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs"
+              className="self-start sm:self-auto px-3 sm:px-3.5 py-1.5 sm:py-2 bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded-lg text-[11px] sm:text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Provision company</span>
+              <span>Add Company</span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white border border-[#E7E2D6] rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between">
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="text-[10px] font-bold text-[#1A2533] uppercase tracking-wider block font-mono">
-                    WORKSPACES
-                  </span>
-                  <div className="flex items-baseline gap-1.5 mt-1">
-                    <span className="text-3xl font-serif font-bold text-[#1A2533]">{companies.length}</span>
-                    <span className="text-xs text-[#7E8B9C]">active tenants</span>
+                  <span className="text-[11px] sm:text-xs font-medium text-slate-500 block">Workspaces</span>
+                  <div className="flex items-baseline gap-1.5 mt-1 sm:mt-1.5">
+                    <span className="text-xl sm:text-2xl font-bold text-slate-900">{companies.length}</span>
+                    <span className="text-[11px] sm:text-xs text-slate-400">tenants</span>
                   </div>
                 </div>
-                <div className="w-6 h-6 rounded-md bg-[#FAF5EE] text-[#C05D34] flex items-center justify-center">
-                  <Building2 className="w-3.5 h-3.5" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-50 border border-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                  <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
-              </div>
-              <div className="mt-4 pt-2.5 border-t border-[#F2EDE2] text-xs text-[#6F7C8E]">
-                {companies.filter((c) => c.status === 'ACTIVE').length} operating normally
               </div>
             </div>
 
-            <div className="bg-white border border-[#E7E2D6] rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+            <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between">
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="text-[10px] font-bold text-[#1A2533] uppercase tracking-wider block font-mono">
-                    EMPLOYEE SLOTS
-                  </span>
-                  <div className="flex items-baseline gap-1.5 mt-1">
-                    <span className="text-3xl font-serif font-bold text-[#1A2533]">{totalSlotsAll}</span>
-                    <span className="text-xs text-[#7E8B9C]">allocated</span>
+                  <span className="text-[11px] sm:text-xs font-medium text-slate-500 block">Employee Slots</span>
+                  <div className="flex items-baseline gap-1.5 mt-1 sm:mt-1.5">
+                    <span className="text-xl sm:text-2xl font-bold text-slate-900">{totalSlotsAll}</span>
+                    <span className="text-[11px] sm:text-xs text-slate-400">allocated</span>
                   </div>
                 </div>
-                <div className="w-6 h-6 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center">
-                  <Users className="w-3.5 h-3.5" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-50 border border-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                  <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
-              </div>
-              <div className="mt-4 pt-2.5 border-t border-[#F2EDE2] text-xs text-teal font-medium">
-                Live across tenant databases
               </div>
             </div>
 
-            <div className="bg-white border border-[#E7E2D6] rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+            <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between">
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="text-[10px] font-bold text-[#C05D34] uppercase tracking-wider block font-mono">
-                    SUSPENDED
-                  </span>
-                  <div className="flex items-baseline gap-1.5 mt-1">
-                    <span className="text-3xl font-serif font-bold text-[#C05D34]">{totalSuspended}</span>
-                    <span className="text-xs text-[#7E8B9C]">tenants</span>
+                  <span className="text-[11px] sm:text-xs font-medium text-slate-500 block">Suspended</span>
+                  <div className="flex items-baseline gap-1.5 mt-1 sm:mt-1.5">
+                    <span className="text-xl sm:text-2xl font-bold text-[#C05D34]">{totalSuspended}</span>
+                    <span className="text-[11px] sm:text-xs text-slate-400">accounts</span>
                   </div>
                 </div>
-                <div className="w-6 h-6 rounded-md bg-[#FAF5EE] text-[#C05D34] flex items-center justify-center">
-                  <Clock className="w-3.5 h-3.5" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-50 border border-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
-              </div>
-              <div className="mt-4 pt-2.5 border-t border-[#F2EDE2] text-xs text-[#C05D34] font-medium">
-                Locked at gateway
               </div>
             </div>
 
-            <div className="bg-white border border-[#E7E2D6] rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+            <div className="bg-white border border-slate-200/80 rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col justify-between">
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="text-[10px] font-bold text-[#1A2533] uppercase tracking-wider block font-mono">
-                    DATA PRIVACY
-                  </span>
-                  <div className="flex items-baseline gap-1.5 mt-1">
-                    <span className="text-xl font-serif font-bold text-[#1A2533]">100% Isolated</span>
+                  <span className="text-[11px] sm:text-xs font-medium text-slate-500 block">Active Status</span>
+                  <div className="flex items-baseline gap-1.5 mt-1 sm:mt-1.5">
+                    <span className="text-xl sm:text-2xl font-bold text-emerald-700">
+                      {companies.filter((c) => c.status === 'ACTIVE').length}
+                    </span>
+                    <span className="text-[11px] sm:text-xs text-slate-400">normal</span>
                   </div>
                 </div>
-                <div className="w-6 h-6 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center">
-                  <ShieldCheck className="w-3.5 h-3.5" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
                 </div>
-              </div>
-              <div className="mt-4 pt-2.5 border-t border-[#F2EDE2] text-[11px] text-[#7E8B9C]">
-                Tenant ID verified on API
               </div>
             </div>
           </div>
 
-          {/* Quick Companies Table */}
-          <div className="bg-white border border-[#E7E2D6] rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden">
-            <div className="p-4 border-b border-[#F0EBE1] flex justify-between items-center">
-              <h3 className="font-serif font-bold text-base text-[#1A2533]">Registered Tenant Organizations</h3>
-              <span className="text-xs text-[#7A8696] font-mono">{companies.length} workspaces</span>
+          <div className="bg-white border border-slate-200/80 rounded-xl shadow-2xs overflow-hidden">
+            <div className="p-3.5 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-semibold text-xs text-slate-800">Tenant Brokerages</h3>
+              <span className="text-xs text-slate-500">{companies.length} registered</span>
             </div>
-
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-[#FAF8F5] border-b border-[#EAE5DC] text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider font-mono">
-                    <th className="py-3 px-5">COMPANY NAME</th>
-                    <th className="py-3 px-5">SLUG</th>
-                    <th className="py-3 px-5">SLOTS</th>
-                    <th className="py-3 px-5">STATUS</th>
-                    <th className="py-3 px-5 text-right">ACTION</th>
+                  <tr className="bg-slate-50/70 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="py-2.5 px-4">Company</th>
+                    <th className="py-2.5 px-4">Workspace Slug</th>
+                    <th className="py-2.5 px-4">Capacity</th>
+                    <th className="py-2.5 px-4">Status</th>
+                    <th className="py-2.5 px-4 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#F2EDE2]">
+                <tbody className="divide-y divide-slate-100">
                   {companies.map((c) => (
-                    <tr key={c._id} className="hover:bg-[#FAF8F5] transition">
-                      <td className="py-3.5 px-5">
-                        <div className="font-bold text-[#1A2533] text-xs">{c.name}</div>
-                        <div className="text-[11px] text-[#7E8B9C] mt-0.5">{c.address || c.location || 'Pune'}</div>
-                      </td>
-                      <td className="py-3.5 px-5 font-mono text-[11px]">
-                        /{c.slug}
-                      </td>
-                      <td className="py-3.5 px-5 font-mono font-bold text-xs text-[#1A2533]">
-                        {c.maxSlots || 10} slots
-                      </td>
-                      <td className="py-3.5 px-5">
-                        <span className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider font-mono ${
-                          c.status === 'ACTIVE' ? 'bg-[#EBF7EE] text-[#1E7E34]' : 'bg-[#FBECE6] text-[#C05D34]'
+                    <tr key={c._id} className="hover:bg-slate-50/70 transition">
+                      <td className="py-3 px-4 font-semibold text-slate-900">{c.name}</td>
+                      <td className="py-3 px-4 text-slate-600 font-mono">/{c.slug}</td>
+                      <td className="py-3 px-4 text-slate-700">{c.maxSlots || 10} seats</td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                          c.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
                         }`}>
                           {c.status}
                         </span>
                       </td>
-                      <td className="py-3.5 px-5 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => toggleCompanyStatus(c._id, c.status)}
-                            className={`px-2.5 py-1 text-xs font-semibold border rounded transition ${
-                              c.status === 'ACTIVE'
-                                ? 'bg-[#FAF8F5] text-rose-700 border-rose-200 hover:bg-rose-50'
-                                : 'bg-[#FAF8F5] text-emerald-700 border-emerald-200 hover:bg-emerald-50'
-                            }`}
-                          >
-                            {c.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCompany(c._id, c.name)}
-                            className="p-1 text-[#8E9AAB] hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded transition"
-                            title="Delete Company"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={() => toggleCompanyStatus(c._id, c.status)}
+                          className="px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded transition cursor-pointer"
+                        >
+                          {c.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -361,88 +290,105 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
         </div>
       )}
 
-      {/* ========================================================= */}
-      {/* SECTION 2: COMPANIES DIRECTORY                            */}
-      {/* ========================================================= */}
+      {/* SECTION 2: COMPANIES DIRECTORY */}
       {activeSection === 'sa-companies' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <div className="text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider font-mono mb-1">
-                PLATFORM SUPER ADMIN / Tenants Directory
-              </div>
-              <h1 className="text-3xl font-serif font-bold text-[#1A2533] tracking-tight leading-tight">
-                All Broker Companies
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight font-sans">
+                Companies Directory
               </h1>
-              <p className="text-xs text-[#6F7C8E] mt-1">
-                Active brokerage accounts: {companies.length} registered.
+              <p className="text-xs text-slate-500 mt-0.5">
+                Registered broker tenant organizations ({companies.length} total).
               </p>
             </div>
 
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded-md text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs"
+              className="px-3.5 py-1.5 bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Create Company</span>
             </button>
           </div>
 
-          <div className="bg-white border border-[#E7E2D6] rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden">
+          <div className="bg-white border border-slate-200/80 rounded-xl shadow-2xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-[#FAF8F5] border-b border-[#EAE5DC] text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider font-mono">
-                    <th className="py-3 px-5">COMPANY & LOCATION</th>
-                    <th className="py-3 px-5">WORKSPACE SLUG</th>
-                    <th className="py-3 px-5">SLOT CAPACITY</th>
-                    <th className="py-3 px-5">STATUS</th>
-                    <th className="py-3 px-5 text-right">ACTION</th>
+                  <tr className="bg-slate-50/70 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="py-2.5 px-4">Company & Location</th>
+                    <th className="py-2.5 px-4">Workspace Slug</th>
+                    <th className="py-2.5 px-4">Slot Capacity</th>
+                    <th className="py-2.5 px-4">Status</th>
+                    <th className="py-2.5 px-4 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#F2EDE2]">
-                  {filteredCompanies.map((c) => (
-                    <tr key={c._id} className="hover:bg-[#FAF8F5] transition">
-                      <td className="py-3.5 px-5">
-                        <div className="font-bold text-[#1A2533]">{c.name}</div>
-                        <div className="text-[11px] text-[#7E8B9C] mt-0.5">{c.address || 'India'}</div>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredCompanies.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
+                          <Building2 className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-semibold text-slate-800">No company workspaces found</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {search ? 'Try adjusting your search criteria' : 'Create a tenant organization to get started'}
+                        </p>
+                        <button
+                          onClick={() => setShowCreateModal(true)}
+                          className="mt-3 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition shadow-2xs"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Create Company</span>
+                        </button>
                       </td>
-                      <td className="py-3.5 px-5 font-mono text-[11px] text-[#1A2533]">
-                        broker.app/{c.slug}
+                    </tr>
+                  ) : (
+                    filteredCompanies.map((c) => (
+                      <tr key={c._id} className="hover:bg-slate-50/70 transition">
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-slate-900">{c.name}</div>
+                        <div className="text-[11px] text-slate-500 mt-0.5">{c.address || 'India'}</div>
                       </td>
-                      <td className="py-3.5 px-5 font-mono font-bold text-xs">
-                        {c.maxSlots || 10} slots
-                      </td>
-                      <td className="py-3.5 px-5">
-                        <span className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider font-mono ${
-                          c.status === 'ACTIVE' ? 'bg-[#EBF7EE] text-[#1E7E34]' : 'bg-[#FBECE6] text-[#C05D34]'
+                      <td className="py-3 px-4 font-mono text-slate-600">/{c.slug}</td>
+                      <td className="py-3 px-4 font-semibold text-slate-800">{c.maxSlots || 10} slots</td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                          c.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
                         }`}>
                           {c.status}
                         </span>
                       </td>
-                      <td className="py-3.5 px-5 text-right">
+                      <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => toggleCompanyStatus(c._id, c.status)}
-                            className={`px-2.5 py-1 text-xs font-semibold border rounded transition ${
-                              c.status === 'ACTIVE'
-                                ? 'bg-[#FAF8F5] text-rose-700 border-rose-200 hover:bg-rose-50'
-                                : 'bg-[#FAF8F5] text-emerald-700 border-emerald-200 hover:bg-emerald-50'
-                            }`}
+                            className="px-2.5 py-1 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 rounded transition cursor-pointer"
                           >
                             {c.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
                           </button>
                           <button
-                            onClick={() => handleDeleteCompany(c._id, c.name)}
-                            className="p-1 text-[#8E9AAB] hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded transition"
-                            title="Delete Company"
+                            onClick={() => {
+                              setCompanyToDelete({
+                                id: c._id,
+                                name: c.name,
+                                slug: c.slug || '',
+                                maxSlots: c.maxSlots || 10,
+                                status: c.status || 'ACTIVE',
+                              });
+                              setDeleteError(null);
+                            }}
+                            className="p-1 text-slate-400 hover:text-rose-600 rounded transition cursor-pointer"
+                            title="Delete Company Workspace"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -450,94 +396,89 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
         </div>
       )}
 
-      {/* ========================================================= */}
-      {/* SECTION 3: CREATE COMPANY                                 */}
-      {/* ========================================================= */}
+      {/* SECTION 3: CREATE COMPANY */}
       {activeSection === 'sa-create-company' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <div className="text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider font-mono mb-1">
-                PLATFORM SUPER ADMIN / Provisioning
-              </div>
-              <h1 className="text-3xl font-serif font-bold text-[#1A2533] tracking-tight leading-tight">
-                Provision New Company Workspace
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight font-sans">
+                Create Company
               </h1>
-              <p className="text-xs text-[#6F7C8E] mt-1">
-                Provision a dedicated brokerage workspace and assign Company Admin.
+              <p className="text-xs text-slate-500 mt-0.5">
+                Provision a new broker organization workspace and assign Administrator.
               </p>
             </div>
           </div>
 
-          <div className="bg-white border border-[#E7E2D6] rounded-xl p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] max-w-2xl">
+          <div className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-2xs max-w-2xl">
             <form onSubmit={handleCreateCompany} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Broker Company Legal Name</label>
+                <label className="block text-xs font-semibold text-slate-800 mb-1">Company Legal Name</label>
                 <input
                   type="text"
                   required
                   value={newCompany.name}
                   onChange={(e) => setNewCompany({ ...newCompany, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
-                  placeholder="e.g. Apex Shield Insurance Brokers"
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-slate-400"
+                  placeholder="e.g. Acme Insurance Brokers Pvt Ltd"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Subdomain / Slug</label>
-                  <input
-                    type="text"
-                    required
-                    value={newCompany.slug}
-                    onChange={(e) => setNewCompany({ ...newCompany, slug: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs font-mono focus:outline-none focus:border-[#C05D34]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Slot Capacity</label>
-                  <input
-                    type="number"
-                    required
-                    min={1}
-                    value={newCompany.maxSlots}
-                    onChange={(e) => setNewCompany({ ...newCompany, maxSlots: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs font-mono focus:outline-none focus:border-[#C05D34]"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-800 mb-1">Workspace Slug</label>
+                <input
+                  type="text"
+                  required
+                  value={newCompany.slug}
+                  onChange={(e) => setNewCompany({ ...newCompany, slug: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-slate-400 font-mono"
+                  placeholder="acme-insurance"
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Admin Full Name</label>
+                  <label className="block text-xs font-semibold text-slate-800 mb-1">Admin Name</label>
                   <input
                     type="text"
                     required
                     value={newCompany.adminName}
                     onChange={(e) => setNewCompany({ ...newCompany, adminName: e.target.value })}
-                    placeholder="e.g. Rajesh Sharma"
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-slate-400"
+                    placeholder="John Doe"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Admin Email Address</label>
+                  <label className="block text-xs font-semibold text-slate-800 mb-1">Admin Email</label>
                   <input
                     type="email"
                     required
                     value={newCompany.adminEmail}
                     onChange={(e) => setNewCompany({ ...newCompany, adminEmail: e.target.value })}
-                    placeholder="admin@broker.in"
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-slate-400"
+                    placeholder="admin@acme.com"
                   />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#F0EBE1] flex justify-end">
+              <div>
+                <label className="block text-xs font-semibold text-slate-800 mb-1">Employee Slot Capacity</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={newCompany.maxSlots}
+                  onChange={(e) => setNewCompany({ ...newCompany, maxSlots: Number(e.target.value) || 10 })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-slate-400"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex justify-end">
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#C05D34] hover:bg-[#A94F2B] text-white text-xs font-semibold rounded shadow-2xs"
+                  className="px-4 py-2 bg-[#C05D34] hover:bg-[#A94F2B] text-white text-xs font-semibold rounded-lg shadow-2xs transition cursor-pointer"
                 >
-                  Provision Workspace
+                  Create Company
                 </button>
               </div>
             </form>
@@ -545,33 +486,54 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
         </div>
       )}
 
-      {/* ========================================================= */}
-      {/* SECTION 4: COMPANY DETAILS                                */}
-      {/* ========================================================= */}
+      {/* SECTION 4: COMPANY ADMINISTRATION */}
       {activeSection === 'sa-company-details' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <div className="text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider font-mono mb-1">
-                PLATFORM SUPER ADMIN / Company Administration
-              </div>
-              <h1 className="text-3xl font-serif font-bold text-[#1A2533] tracking-tight leading-tight">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight font-sans">
                 Company Administration
               </h1>
-              <p className="text-xs text-[#6F7C8E] mt-1">
-                Active tenant cards from database.
+              <p className="text-xs text-slate-500 mt-0.5">
+                Active tenant organizations and configuration status.
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {companies.map((c) => (
-              <div key={c._id} className="bg-white border border-[#E7E2D6] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+          {loading ? (
+            <div className="bg-white border border-slate-200/80 rounded-xl p-12 text-center shadow-2xs">
+              <div className="w-6 h-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+              <p className="text-xs font-medium text-slate-500">Loading tenant organizations...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {companies.length === 0 ? (
+                <div className="col-span-full bg-white border border-slate-200/80 rounded-xl p-10 text-center shadow-2xs">
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto mb-3">
+                    <Building2 className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-semibold text-sm text-slate-900">No Companies Configured</h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                    There are currently no active tenant organizations on the platform. Provision a new broker workspace to configure access and slots.
+                  </p>
+                  <div className="mt-4 flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => setShowCreateModal(true)}
+                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Create Company</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                companies.map((c) => (
+              <div key={c._id} className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-2xs flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between pb-3 border-b border-[#F0EBE1]">
-                    <h4 className="font-serif font-bold text-base text-[#1A2533]">{c.name}</h4>
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                      c.status === 'ACTIVE' ? 'bg-[#EBF7EE] text-[#1E7E34]' : 'bg-[#FBECE6] text-[#C05D34]'
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h4 className="font-semibold text-sm text-slate-900">{c.name}</h4>
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
+                      c.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
                     }`}>
                       {c.status}
                     </span>
@@ -579,88 +541,93 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
 
                   <div className="mt-3.5 space-y-2 text-xs">
                     <div>
-                      <span className="text-[#8E9AAB] block text-[10px] uppercase font-mono">WORKSPACE URL</span>
-                      <span className="font-mono text-[#1A2533]">broker.app/{c.slug}</span>
+                      <span className="text-slate-400 block text-[10px] uppercase">Workspace URL</span>
+                      <span className="font-mono text-slate-700">/{c.slug}</span>
                     </div>
                     <div>
-                      <span className="text-[#8E9AAB] block text-[10px] uppercase font-mono">SLOT CAPACITY</span>
-                      <span className="font-mono text-[#1A2533]">{c.maxSlots || 10} seats allocated</span>
+                      <span className="text-slate-400 block text-[10px] uppercase">Slot Capacity</span>
+                      <span className="text-slate-800 font-medium">{c.maxSlots || 10} seats allocated</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-[#F0EBE1] flex items-center justify-between">
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                   <button
                     onClick={() => toggleCompanyStatus(c._id, c.status)}
-                    className="text-xs font-semibold text-[#C05D34] hover:underline"
+                    className="text-xs font-semibold text-[#C05D34] hover:underline cursor-pointer"
                   >
-                    {c.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+                    {c.status === 'ACTIVE' ? 'Suspend Organization' : 'Activate Organization'}
                   </button>
                 </div>
               </div>
-            ))}
+            ))
+            )}
           </div>
+          )}
         </div>
       )}
 
-      {/* ========================================================= */}
-      {/* SECTION 5: SLOT CAPACITY MANAGER                          */}
-      {/* ========================================================= */}
+      {/* SECTION 5: SLOT CAPACITY MANAGER */}
       {activeSection === 'sa-slots' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <div className="text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider font-mono mb-1">
-                PLATFORM SUPER ADMIN / Multi-Tenant Licensing
-              </div>
-              <h1 className="text-3xl font-serif font-bold text-[#1A2533] tracking-tight leading-tight">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight font-sans">
                 Slot Capacity Manager
               </h1>
-              <p className="text-xs text-[#6F7C8E] mt-1">
-                Dynamically adjust employee seats per tenant.
+              <p className="text-xs text-slate-500 mt-0.5">
+                Adjust employee seat capacity per tenant organization.
               </p>
             </div>
           </div>
 
-          <div className="bg-white border border-[#E7E2D6] rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+          <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-2xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-[#FAF8F5] border-b border-[#EAE5DC] text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider font-mono">
-                    <th className="py-3 px-5">COMPANY WORKSPACE</th>
-                    <th className="py-3 px-5">CURRENT ALLOCATED SLOTS</th>
-                    <th className="py-3 px-5 text-right">ADJUST CAPACITY</th>
+                  <tr className="bg-slate-50/70 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                    <th className="py-2.5 px-4">Company Workspace</th>
+                    <th className="py-2.5 px-4">Allocated Slots</th>
+                    <th className="py-2.5 px-4 text-right">Adjust Capacity</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#F2EDE2]">
-                  {companies.map((c) => (
-                    <tr key={c._id} className="hover:bg-[#FAF8F5] transition">
-                      <td className="py-3.5 px-5">
-                        <div className="font-bold text-[#1A2533]">{c.name}</div>
-                        <div className="text-[11px] text-[#7A8696] font-mono">/{c.slug}</div>
+                <tbody className="divide-y divide-slate-100">
+                  {companies.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="py-8 text-center text-xs text-slate-400">
+                        No company workspaces available to allocate slots.
                       </td>
-                      <td className="py-3.5 px-5 font-mono font-bold text-sm text-[#1A2533]">
+                    </tr>
+                  ) : (
+                    companies.map((c) => (
+                    <tr key={c._id} className="hover:bg-slate-50/70 transition">
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-slate-900">{c.name}</div>
+                        <div className="text-[11px] text-slate-500 font-mono">/{c.slug}</div>
+                      </td>
+                      <td className="py-3 px-4 font-semibold text-slate-900">
                         {c.maxSlots || 10} slots
                       </td>
-                      <td className="py-3.5 px-5 text-right">
+                      <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => updateSlots(c._id, (c.maxSlots || 10) - 1)}
-                            className="w-7 h-7 bg-white border border-[#D5CEBF] hover:border-[#1A2533] rounded font-mono font-bold text-xs"
+                            className="w-7 h-7 bg-white border border-slate-200 hover:border-slate-400 rounded font-bold text-xs cursor-pointer"
                           >
                             -
                           </button>
-                          <span className="font-mono font-bold px-2 text-xs text-[#1A2533]">{c.maxSlots || 10}</span>
+                          <span className="font-semibold px-2 text-xs text-slate-900">{c.maxSlots || 10}</span>
                           <button
                             onClick={() => updateSlots(c._id, (c.maxSlots || 10) + 1)}
-                            className="w-7 h-7 bg-white border border-[#D5CEBF] hover:border-[#1A2533] rounded font-mono font-bold text-xs text-[#C05D34]"
+                            className="w-7 h-7 bg-white border border-slate-200 hover:border-slate-400 rounded font-bold text-xs text-[#C05D34] cursor-pointer"
                           >
                             +
                           </button>
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -668,46 +635,41 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
         </div>
       )}
 
-      {/* ========================================================= */}
-      {/* SECTION 6: PLATFORM AUDIT LOGS                            */}
-      {/* ========================================================= */}
+      {/* SECTION 6: PLATFORM AUDIT LOGS */}
       {activeSection === 'sa-audit-logs' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <div className="text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider font-mono mb-1">
-                PLATFORM SUPER ADMIN / Security & Audit Trail
-              </div>
-              <h1 className="text-3xl font-serif font-bold text-[#1A2533] tracking-tight leading-tight">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight font-sans">
                 Platform Audit Logs
               </h1>
-              <p className="text-xs text-[#6F7C8E] mt-1">
-                Security audit trail: {auditLogs.length} events logged.
+              <p className="text-xs text-slate-500 mt-0.5">
+                System events and tenant administrative actions ({auditLogs.length} logged).
               </p>
             </div>
           </div>
 
-          <div className="bg-white border border-[#E7E2D6] rounded-xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-            <div className="divide-y divide-[#F0EBE1]">
+          <div className="bg-white border border-slate-200/80 rounded-xl overflow-hidden shadow-2xs">
+            <div className="divide-y divide-slate-100">
               {auditLogs.map((log) => (
-                <div key={log._id} className="p-4 flex items-center justify-between hover:bg-[#FAF8F5]/80 transition text-xs">
+                <div key={log._id} className="p-3.5 flex items-center justify-between hover:bg-slate-50/70 transition text-xs">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded bg-[#FAF5EE] text-[#C05D34] flex items-center justify-center shrink-0 border border-[#EEDFCE]">
+                    <div className="w-8 h-8 rounded-lg bg-slate-50 text-slate-600 flex items-center justify-center shrink-0 border border-slate-100">
                       <Activity className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-semibold text-[#1A2533]">{log.action}</div>
-                      <div className="text-[11px] text-[#7A8696]">
-                        Entity: <span className="font-semibold text-[#1A2533]">{log.entity || 'Platform'}</span> · Role: {log.actorRole || 'SYSTEM'}
+                      <div className="font-semibold text-slate-900">{log.action}</div>
+                      <div className="text-[11px] text-slate-500">
+                        Entity: <span className="text-slate-700 font-medium">{log.entity || 'Platform'}</span> · Role: {log.actorRole || 'SYSTEM'}
                       </div>
                     </div>
                   </div>
 
                   <div className="text-right shrink-0">
-                    <div className="font-mono text-[11px] text-[#8E9AAB]">
+                    <div className="font-mono text-[11px] text-slate-500">
                       {new Date(log.createdAt || Date.now()).toLocaleTimeString()}
                     </div>
-                    <span className="text-[10px] font-mono text-[#1E7E34] font-semibold">VERIFIED</span>
+                    <span className="text-[10px] text-emerald-700 font-medium">Verified</span>
                   </div>
                 </div>
               ))}
@@ -720,89 +682,113 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
       <Modal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title="Provision Company to Database"
-        subtitle="Create an isolated brokerage workspace with admin credentials"
-        maxWidth="max-w-lg"
+        title="Add Broker Organization"
+        maxWidth="max-w-md"
       >
-        <form onSubmit={handleCreateCompany} className="space-y-3">
+        <form onSubmit={handleCreateCompany} className="space-y-2.5 sm:space-y-3">
           <div>
-            <label className="block text-xs font-semibold text-[#1A2533] mb-1">Company Legal Name</label>
+            <label className="block text-[11px] sm:text-xs font-semibold text-slate-800 mb-0.5 sm:mb-1">Legal Company Name</label>
             <input
               type="text"
               required
               value={newCompany.name}
               onChange={(e) => setNewCompany({ ...newCompany, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
-              placeholder="e.g. Vanguard Insurance Advisors"
-              className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+              className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-slate-200 rounded-lg text-[11px] sm:text-xs focus:outline-none focus:border-slate-400"
+              placeholder="e.g. Apex Insurance Pvt Ltd"
             />
           </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-[#1A2533] mb-1">Workspace Slug</label>
-              <input
-                type="text"
-                required
-                value={newCompany.slug}
-                onChange={(e) => setNewCompany({ ...newCompany, slug: e.target.value })}
-                className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs font-mono focus:outline-none focus:border-[#C05D34]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-[#1A2533] mb-1">Employee Slots</label>
-              <input
-                type="number"
-                required
-                min={1}
-                value={newCompany.maxSlots}
-                onChange={(e) => setNewCompany({ ...newCompany, maxSlots: Number(e.target.value) })}
-                className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs font-mono focus:outline-none focus:border-[#C05D34]"
-              />
-            </div>
+          <div>
+            <label className="block text-[11px] sm:text-xs font-semibold text-slate-800 mb-0.5 sm:mb-1">Workspace Slug</label>
+            <input
+              type="text"
+              required
+              value={newCompany.slug}
+              onChange={(e) => setNewCompany({ ...newCompany, slug: e.target.value })}
+              className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-slate-200 rounded-lg text-[11px] sm:text-xs focus:outline-none focus:border-slate-400 font-mono"
+              placeholder="apex-insurance"
+            />
           </div>
-
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             <div>
-              <label className="block text-xs font-semibold text-[#1A2533] mb-1">Admin Name</label>
+              <label className="block text-[11px] sm:text-xs font-semibold text-slate-800 mb-0.5 sm:mb-1">Admin Full Name</label>
               <input
                 type="text"
                 required
                 value={newCompany.adminName}
                 onChange={(e) => setNewCompany({ ...newCompany, adminName: e.target.value })}
-                placeholder="Deepak Verma"
-                className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+                className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-slate-200 rounded-lg text-[11px] sm:text-xs focus:outline-none focus:border-slate-400"
+                placeholder="Ramesh Patel"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#1A2533] mb-1">Admin Email</label>
+              <label className="block text-[11px] sm:text-xs font-semibold text-slate-800 mb-0.5 sm:mb-1">Admin Email</label>
               <input
                 type="email"
                 required
                 value={newCompany.adminEmail}
                 onChange={(e) => setNewCompany({ ...newCompany, adminEmail: e.target.value })}
-                placeholder="deepak@vanguard.in"
-                className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+                className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-slate-200 rounded-lg text-[11px] sm:text-xs focus:outline-none focus:border-slate-400"
+                placeholder="ramesh@apex.in"
               />
             </div>
           </div>
-
-          <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
+          <div>
+            <label className="block text-[11px] sm:text-xs font-semibold text-slate-800 mb-0.5 sm:mb-1">Employee Slot Allocation</label>
+            <input
+              type="number"
+              min={1}
+              max={500}
+              value={newCompany.maxSlots}
+              onChange={(e) => setNewCompany({ ...newCompany, maxSlots: Number(e.target.value) || 10 })}
+              className="w-full px-2.5 sm:px-3 py-1.5 sm:py-2 border border-slate-200 rounded-lg text-[11px] sm:text-xs focus:outline-none focus:border-slate-400"
+            />
+          </div>
+          <div className="pt-2.5 sm:pt-3 border-t border-slate-100 flex justify-end gap-2">
             <button
               type="button"
               onClick={() => setShowCreateModal(false)}
-              className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
+              className="px-2.5 sm:px-3 py-1.5 text-[11px] sm:text-xs text-slate-600 hover:bg-slate-50 rounded-lg font-medium cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
+              className="px-3.5 sm:px-4 py-1.5 text-[11px] sm:text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded-lg transition shadow-2xs cursor-pointer"
             >
-              Save Workspace
+              Save Company
             </button>
           </div>
         </form>
       </Modal>
+
+      {/* DEDICATED DELETE CONFIRMATION MODAL / PAGE */}
+      <DeleteConfirmationModal
+        isOpen={!!companyToDelete}
+        title="Delete Company Workspace"
+        itemName={companyToDelete?.name || ''}
+        itemType="company workspace"
+        requireTypingName={true}
+        isDeleting={isDeletingCompany}
+        errorMessage={deleteError}
+        details={
+          companyToDelete
+            ? [
+                { label: 'Company Name', value: companyToDelete.name },
+                { label: 'Tenant Slug', value: `/${companyToDelete.slug}` },
+                { label: 'Slot Capacity', value: `${companyToDelete.maxSlots} employee slots` },
+                { label: 'Account Status', value: companyToDelete.status },
+              ]
+            : []
+        }
+        warningMessage="This action will permanently delete this tenant organization and all its data. All customer records, underwritten policies, payment ledgers, and employee account credentials will be irrevocably deleted."
+        onConfirm={confirmDeleteCompany}
+        onClose={() => {
+          if (!isDeletingCompany) {
+            setCompanyToDelete(null);
+            setDeleteError(null);
+          }
+        }}
+      />
     </div>
   );
 };

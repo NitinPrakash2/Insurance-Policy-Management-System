@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Bell,
   Check,
@@ -9,61 +9,8 @@ import {
   TrendingUp,
   Sparkles,
   X,
-  ExternalLink,
 } from 'lucide-react';
-import { socketService } from '../../services/socket';
-
-export interface NotificationItem {
-  id: string;
-  type: 'followup' | 'payment' | 'policy' | 'commission' | 'system';
-  title: string;
-  description: string;
-  time: string;
-  unread: boolean;
-}
-
-const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 'notif-1',
-    type: 'followup',
-    title: 'Renewal Call Due Today',
-    description: 'Vikram Malhotra - Bajaj Allianz Health Policy expiring in 3 days. Action needed.',
-    time: '12m ago',
-    unread: true,
-  },
-  {
-    id: 'notif-2',
-    type: 'payment',
-    title: 'Premium Payment Received',
-    description: '₹18,500 instalment credited for Policy #POL-2026-9042 (HDFC ERGO).',
-    time: '45m ago',
-    unread: true,
-  },
-  {
-    id: 'notif-3',
-    type: 'policy',
-    title: 'New Policy Bound & Active',
-    description: 'Comprehensive Commercial Motor #POL-2026-4412 issued for Priya Sharma.',
-    time: '2h ago',
-    unread: true,
-  },
-  {
-    id: 'notif-4',
-    type: 'commission',
-    title: 'Sales Commission Credited',
-    description: '₹1,240 payout logged in ledger for Sales Agent Rajesh Verma.',
-    time: '5h ago',
-    unread: false,
-  },
-  {
-    id: 'notif-5',
-    type: 'system',
-    title: 'Workspace Synchronized',
-    description: 'All policy records and customer ledgers are up to date.',
-    time: 'Today',
-    unread: false,
-  },
-];
+import { useNotifications, NotificationItem } from '../../context/NotificationContext';
 
 interface NotificationDropdownProps {
   isOpen: boolean;
@@ -76,8 +23,17 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   onClose,
   onSelectAction,
 }) => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
-  const [filter, setFilter] = useState<'all' | 'followup' | 'payment' | 'policy'>('all');
+  const {
+    filteredNotifs,
+    unreadCount,
+    filter,
+    setFilter,
+    markAllRead,
+    markSingleRead,
+    deleteNotification,
+    clearAll,
+  } = useNotifications();
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close when clicked outside
@@ -96,78 +52,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     };
   }, [isOpen, onClose]);
 
-  // Listen for live WebSocket notifications
-  useEffect(() => {
-    const unsubPolicy = socketService.on('POLICY_CREATED', (data: any) => {
-      const newNotif: NotificationItem = {
-        id: `live-pol-${Date.now()}`,
-        type: 'policy',
-        title: 'Live: New Policy Issued',
-        description: `Policy #${data.policyNumber || 'NEW'} registered for ₹${Number(data.premium || 0).toLocaleString('en-IN')}`,
-        time: 'Just now',
-        unread: true,
-      };
-      setNotifications((prev) => [newNotif, ...prev]);
-    });
-
-    const unsubFollowup = socketService.on('FOLLOWUP_CREATED', (data: any) => {
-      const newNotif: NotificationItem = {
-        id: `live-fol-${Date.now()}`,
-        type: 'followup',
-        title: 'Live: Follow-Up Scheduled',
-        description: `Call scheduled for customer: ${data.notes || 'Renewal reminder'}`,
-        time: 'Just now',
-        unread: true,
-      };
-      setNotifications((prev) => [newNotif, ...prev]);
-    });
-
-    const unsubPlatform = socketService.on('platform_activity', (data: any) => {
-      if (data?.event) {
-        const newNotif: NotificationItem = {
-          id: `live-act-${Date.now()}`,
-          type: 'system',
-          title: `Real-time: ${data.event.replace('_', ' ').toUpperCase()}`,
-          description: `Activity detected in workspace stream at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
-          time: 'Just now',
-          unread: true,
-        };
-        setNotifications((prev) => [newNotif, ...prev]);
-      }
-    });
-
-    return () => {
-      unsubPolicy();
-      unsubFollowup();
-      unsubPlatform();
-    };
-  }, []);
-
   if (!isOpen) return null;
-
-  const unreadCount = notifications.filter((n) => n.unread).length;
-  const filteredNotifs = notifications.filter((n) => {
-    if (filter === 'all') return true;
-    return n.type === filter;
-  });
-
-  const markAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
-  };
-
-  const markSingleRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, unread: false } : n))
-    );
-  };
-
-  const deleteNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  };
-
-  const clearAll = () => {
-    setNotifications([]);
-  };
 
   const getIcon = (type: NotificationItem['type']) => {
     switch (type) {
@@ -193,7 +78,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       {/* Header */}
       <div className="px-4 py-3 bg-[#FAF8F5] border-b border-[#EAE4D8] flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="font-serif font-bold text-[#1A2533] text-sm tracking-tight">
+          <span className="font-semibold text-slate-900 text-sm tracking-tight">
             Notifications
           </span>
           {unreadCount > 0 && (
@@ -207,14 +92,14 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
           {unreadCount > 0 && (
             <button
               onClick={markAllRead}
-              className="text-[11px] font-medium text-[#C05D34] hover:underline flex items-center gap-1"
+              className="text-[11px] font-medium text-[#C05D34] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <Check className="w-3 h-3" /> Mark read
             </button>
           )}
           <button
             onClick={onClose}
-            className="text-[#8E9AAB] hover:text-[#1A2533] p-1 rounded-md hover:bg-[#EAE4D8]/50 transition"
+            className="text-[#8E9AAB] hover:text-[#1A2533] p-1 rounded-md hover:bg-[#EAE4D8]/50 transition cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -227,13 +112,13 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
           <button
             key={tab}
             onClick={() => setFilter(tab)}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-medium capitalize transition ${
+            className={`px-2.5 py-1 rounded-md text-[11px] font-medium capitalize transition cursor-pointer ${
               filter === tab
                 ? 'bg-[#1A2533] text-white font-semibold'
                 : 'text-[#6F7C8E] hover:bg-[#F2EDE2]'
             }`}
           >
-            {tab === 'all' ? 'All' : tab === 'followup' ? 'Follow-ups' : tab === 'payment' ? 'Payments' : 'Policies'}
+            {tab === 'all' ? 'All' : tab === 'followup' ? 'Follow-Ups' : tab === 'payment' ? 'Payments' : 'Policies'}
           </button>
         ))}
       </div>
@@ -247,14 +132,17 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
             </div>
             <p className="text-xs font-semibold text-[#1A2533]">All caught up!</p>
             <p className="text-[11px] text-[#8E9AAB] mt-0.5">
-              No notifications matching your filter.
+              No active notifications matching your filter.
             </p>
           </div>
         ) : (
           filteredNotifs.map((item) => (
             <div
               key={item.id}
-              onClick={() => markSingleRead(item.id)}
+              onClick={() => {
+                markSingleRead(item.id);
+                if (onSelectAction) onSelectAction(item.type);
+              }}
               className={`p-3.5 hover:bg-[#FAF8F5] transition cursor-pointer flex items-start gap-3 relative group ${
                 item.unread ? 'bg-[#FCFAF7]' : 'bg-white'
               }`}
@@ -293,7 +181,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
                     e.stopPropagation();
                     deleteNotification(item.id);
                   }}
-                  className="p-1 rounded text-[#8E9AAB] hover:text-rose-600 hover:bg-rose-50 transition"
+                  className="p-1 rounded text-[#8E9AAB] hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                   title="Dismiss notification"
                 >
                   <Trash2 className="w-3 h-3" />
@@ -309,7 +197,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         <div className="p-2.5 bg-[#FAF8F5] border-t border-[#EAE4D8] flex items-center justify-end text-[11px] text-[#7A8696] px-4">
           <button
             onClick={clearAll}
-            className="hover:text-rose-600 transition font-medium"
+            className="hover:text-rose-600 transition font-medium cursor-pointer"
           >
             Clear all
           </button>

@@ -1,55 +1,87 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Search, Sparkles, Bell } from 'lucide-react';
-import { UserRole } from '../../types';
+import { Search, Bell, Menu } from 'lucide-react';
 import { NotificationDropdown } from './NotificationDropdown';
+import { useNotifications } from '../../context/NotificationContext';
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
+  onOpenMobileSidebar?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
-  const { user, quickLoginAs } = useAuth();
-  const [showNotifications, setShowNotifications] = useState(false);
+export const Header: React.FC<HeaderProps> = ({ onSearch, onOpenMobileSidebar }) => {
+  const { user } = useAuth();
+  const { unreadCount, isOpen: showNotifications, setIsOpen: setShowNotifications } = useNotifications();
+
+  const getWorkspaceTitle = () => {
+    switch (user?.role) {
+      case 'SUPER_ADMIN':
+        return 'Platform Console';
+      case 'OFFICE_STAFF':
+        return 'Operations Desk';
+      case 'SALESMAN':
+        return 'Agent Portal';
+      case 'COMPANY_ADMIN':
+      default:
+        return 'Broker Workspace';
+    }
+  };
 
   return (
-    <div className="w-full flex items-center justify-between pb-4 pt-1 border-b border-[#EAE4D8] mb-6 font-sans">
-      {/* Top Left: Ledger - Warm Title indicator (matching Figma top indicator) */}
-      <div className="flex items-center gap-2 text-xs text-[#7A8696]">
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#1A2533]" />
-          <span className="w-2 h-2 rounded-full bg-[#C05D34]" />
+    <header className="w-full flex items-center justify-between pb-3.5 pt-1 border-b border-slate-200/80 mb-6 font-sans gap-2">
+      {/* Workspace Breadcrumb & Mobile Hamburger */}
+      <div className="flex items-center gap-2.5 text-xs min-w-0">
+        {onOpenMobileSidebar && (
+          <button
+            type="button"
+            onClick={onOpenMobileSidebar}
+            className="lg:hidden p-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 hover:text-slate-900 hover:bg-slate-50 shadow-2xs transition cursor-pointer shrink-0"
+            aria-label="Open Navigation Menu"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+        )}
+        <div className="flex items-center gap-1.5 truncate">
+          <span className="font-semibold text-slate-800 truncate text-xs sm:text-sm">
+            {user?.role === 'SUPER_ADMIN' ? 'ProSurance' : 'Shree Insurance Advisors'}
+          </span>
+          <span className="text-slate-300 hidden sm:inline">/</span>
+          <span className="text-slate-500 font-medium truncate hidden sm:inline">
+            {getWorkspaceTitle()}
+          </span>
         </div>
-        <span className="font-serif font-bold text-[#1A2533] text-sm tracking-wide">Ledger — Warm</span>
-        <span className="text-[11px] text-[#A0AAB7] hidden sm:inline">A little more human</span>
       </div>
 
-      {/* Top Right: Search Bar & Notifications (Matching Figma top right) */}
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#8E9AAB]" />
+      {/* Top Right: Search Bar & Notification Bell */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="relative hidden sm:block">
+          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Find customer or policy"
+            placeholder="Search..."
             onChange={(e) => onSearch && onSearch(e.target.value)}
-            className="pl-8 pr-3 py-1.5 bg-white border border-[#DDD7CB] rounded-md text-xs text-[#1A2533] placeholder:text-[#9AA6B7] focus:outline-none focus:border-[#C05D34] w-56 sm:w-64 shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+            className="pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-300 w-44 md:w-64 lg:w-72 shadow-2xs transition"
           />
         </div>
 
-        {/* Proper Notification Popup Container */}
+        {/* Notification Bell */}
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className={`w-8 h-8 rounded-md bg-white border ${
+            className={`w-8 h-8 rounded-lg bg-white border ${
               showNotifications
-                ? 'border-[#C05D34] text-[#C05D34] shadow-sm'
-                : 'border-[#DDD7CB] text-[#6B7889] hover:border-[#C05D34] hover:text-[#C05D34]'
-            } flex items-center justify-center transition shadow-[0_1px_2px_rgba(0,0,0,0.02)] relative`}
-            title="Notifications"
+                ? 'border-slate-400 text-slate-900 bg-slate-50'
+                : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:text-slate-900'
+            } flex items-center justify-center transition shadow-2xs relative cursor-pointer`}
+            title={unreadCount > 0 ? `${unreadCount} unread notifications` : 'Notifications'}
             aria-label="Notifications"
           >
             <Bell className="w-3.5 h-3.5" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#C05D34] rounded-full border-2 border-white ring-1 ring-[#C05D34]/30 animate-pulse" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-0.5 bg-[#C05D34] text-white text-[9px] font-bold rounded-full border border-white flex items-center justify-center shadow-xs">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
 
           <NotificationDropdown
@@ -57,27 +89,7 @@ export const Header: React.FC<HeaderProps> = ({ onSearch }) => {
             onClose={() => setShowNotifications(false)}
           />
         </div>
-
-        {/* Discrete role switcher for pair testing */}
-        <div className="hidden xl:flex items-center gap-1 bg-white border border-[#DDD7CB] rounded-md px-2 py-1 text-xs shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
-          <span className="text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider flex items-center gap-1 pr-1">
-            <Sparkles className="w-2.5 h-2.5 text-[#C05D34]" /> Role:
-          </span>
-          {(['COMPANY_ADMIN', 'OFFICE_STAFF', 'SALESMAN', 'SUPER_ADMIN'] as UserRole[]).map((r) => (
-            <button
-              key={r}
-              onClick={() => quickLoginAs(r)}
-              className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition ${
-                user?.role === r
-                  ? 'bg-[#1A2533] text-white font-bold'
-                  : 'text-[#5B6675] hover:bg-[#F2EDE2]'
-              }`}
-            >
-              {r === 'COMPANY_ADMIN' ? 'Admin' : r === 'OFFICE_STAFF' ? 'Staff' : r === 'SALESMAN' ? 'Sales' : 'Super'}
-            </button>
-          ))}
-        </div>
       </div>
-    </div>
+    </header>
   );
 };

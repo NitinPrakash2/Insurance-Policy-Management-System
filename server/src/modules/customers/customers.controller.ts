@@ -42,6 +42,24 @@ export class CustomersController {
     return this.customersService.update(req.user.companyId.toString(), id, body);
   }
 
+  @Post('bulk-delete')
+  @Roles(UserRole.COMPANY_ADMIN)
+  async removeMany(@Request() req: any, @Body('ids') ids: string[]) {
+    if (!req.user.companyId) {
+      throw new ForbiddenException('Tenant company context required');
+    }
+    return this.customersService.removeMany(req.user.companyId.toString(), ids || []);
+  }
+
+  @Delete('clear/all')
+  @Roles(UserRole.COMPANY_ADMIN)
+  async clearAll(@Request() req: any) {
+    if (!req.user.companyId) {
+      throw new ForbiddenException('Tenant company context required');
+    }
+    return this.customersService.clearAll(req.user.companyId.toString());
+  }
+
   @Delete(':id')
   @Roles(UserRole.COMPANY_ADMIN)
   async remove(@Request() req: any, @Param('id') id: string) {

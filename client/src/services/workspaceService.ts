@@ -12,6 +12,21 @@ export const workspaceService = {
     return res.data;
   },
 
+  async deleteCustomer(id: string) {
+    const res = await api.delete(`/customers/${id}`);
+    return res.data;
+  },
+
+  async bulkDeleteCustomers(ids: string[]) {
+    const res = await api.post('/customers/bulk-delete', { ids });
+    return res.data;
+  },
+
+  async clearAllCustomers() {
+    const res = await api.delete('/customers/clear/all');
+    return res.data;
+  },
+
   // Policies
   async getPolicies(filters?: { search?: string; status?: string; insurerId?: string; salesmanId?: string }) {
     const res = await api.get('/policies', { params: filters });
@@ -141,6 +156,16 @@ export const workspaceService = {
   // Insurers
   async getInsurers() {
     const res = await api.get('/insurers');
+    return res.data;
+  },
+
+  async createInsurer(data: { name: string; code: string; type: string; contactPerson?: string; phone?: string }) {
+    const res = await api.post('/insurers', data);
+    return res.data;
+  },
+
+  async toggleInsurerActive(id: string) {
+    const res = await api.patch(`/insurers/${id}/toggle-active`);
     return res.data;
   },
 

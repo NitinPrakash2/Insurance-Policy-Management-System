@@ -16,10 +16,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Real seed account credentials corresponding to each role in database
 const ROLE_ACCOUNTS: Record<UserRole, { email: string; pass: string }> = {
-  SUPER_ADMIN: { email: 'superadmin@prosurance.com', pass: 'Password@123' },
-  COMPANY_ADMIN: { email: 'anjali@shreeadvisors.in', pass: 'Password@123' },
-  OFFICE_STAFF: { email: 'staff@shreeadvisors.in', pass: 'Password@123' },
-  SALESMAN: { email: 'amit@shreeadvisors.in', pass: 'Password@123' },
+  SUPER_ADMIN: { email: 'superadmin@prosurance.com', pass: 'SuperAdmin@123' },
+  COMPANY_ADMIN: { email: 'admin@prosurance.com', pass: 'Admin@123' },
+  OFFICE_STAFF: { email: 'staff@prosurance.com', pass: 'Staff@123' },
+  SALESMAN: { email: 'arjun@prosurance.com', pass: 'Salesman@123' },
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -48,12 +48,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return;
           }
         } catch {
-          // Token expired or server was reseeded, re-login
+          // Token expired, clear invalid session
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('company');
         }
       }
 
-      // Automatically login as Company Admin on fresh start / reseed
-      await quickLoginAs('COMPANY_ADMIN');
       setLoading(false);
     };
 
@@ -82,6 +83,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('company');
+    localStorage.removeItem('currentSection');
+    localStorage.setItem('viewMode', 'landing');
     socketService.disconnect();
     setUser(null);
     setCompany(null);

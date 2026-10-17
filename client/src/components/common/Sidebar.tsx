@@ -10,52 +10,78 @@ import {
   FolderOpen,
   Shield,
   LogOut,
+  CreditCard,
+  CalendarClock,
+  Building2,
+  KeyRound,
+  UserCheck,
+  FileText,
+  Plus,
+  X,
 } from 'lucide-react';
 
 interface SidebarProps {
   currentSection: string;
   onSelectSection: (section: string) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSelectSection }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  currentSection,
+  onSelectSection,
+  isOpen = false,
+  onClose,
+}) => {
   const { user, company, logout } = useAuth();
 
-  // Company Admin Navigation (Matching Figma 1:1)
-  const companyAdminNav = [
-    { id: 'ca-dashboard', label: 'Overview', icon: LayoutGrid },
-    { id: 'ca-customers', label: 'Customers', icon: Users },
-    { id: 'ca-policies', label: 'Policies', icon: ShieldCheck },
-    { id: 'ca-followups', label: 'Follow-ups', icon: PhoneCall, badge: 8 },
-    { id: 'ca-commissions', label: 'Commissions', icon: Percent },
-    { id: 'ca-documents', label: 'Documents', icon: FolderOpen },
-    { id: 'ca-reports', label: 'Reports', icon: FileSpreadsheet },
-    { id: 'ca-employees', label: 'Employees', icon: Users },
-  ];
-
-  // Super Admin Navigation
+  // 1. Platform Super Admin (6 Sections)
   const superAdminNav = [
     { id: 'sa-overview', label: 'Platform Overview', icon: LayoutGrid },
-    { id: 'sa-companies', label: 'Companies Directory', icon: Users },
-    { id: 'sa-create-company', label: 'Create Company', icon: Users },
+    { id: 'sa-companies', label: 'Companies Directory', icon: Building2 },
+    { id: 'sa-create-company', label: 'Create Company', icon: Plus },
     { id: 'sa-company-details', label: 'Company Administration', icon: ShieldCheck },
-    { id: 'sa-slots', label: 'Slot Capacity Manager', icon: Users },
+    { id: 'sa-slots', label: 'Slot Capacity Manager', icon: KeyRound },
     { id: 'sa-audit-logs', label: 'Platform Logs', icon: FileSpreadsheet },
   ];
 
-  // Staff Navigation
+  // 2. Company Admin (12 Sections - Aligned with Prototype)
+  const companyAdminNav = [
+    { id: 'ca-dashboard', label: 'Dashboard', icon: LayoutGrid },
+    { id: 'ca-reports', label: 'Business reports', icon: FileSpreadsheet },
+    { id: 'ca-policies', label: 'Insurance policies', icon: ShieldCheck },
+    { id: 'ca-renewals', label: 'Renewal reminders', icon: CalendarClock },
+    { id: 'ca-documents', label: 'Policy/document uploads', icon: FolderOpen },
+    { id: 'ca-customers', label: 'Customers', icon: Users },
+    { id: 'ca-insurers', label: 'Insurance companies', icon: Building2 },
+    { id: 'ca-employees', label: 'Salespersons & Team', icon: Users },
+    { id: 'ca-commissions', label: 'Salesperson commissions', icon: Percent },
+    { id: 'ca-payments', label: 'Payments & EMI Records', icon: CreditCard },
+    { id: 'ca-followups', label: 'Follow-ups & Reminders', icon: PhoneCall },
+    { id: 'ca-roles', label: 'Roles & Permissions', icon: KeyRound },
+  ];
+
+  // 3. Office Staff (8 Sections)
   const staffNav = [
     { id: 'os-today', label: "Today's Work", icon: LayoutGrid },
     { id: 'os-customers', label: 'Customers', icon: Users },
     { id: 'os-policies', label: 'Policies', icon: ShieldCheck },
-    { id: 'os-documents', label: 'Documents', icon: FolderOpen },
+    { id: 'os-payments', label: 'Payments & EMI Records', icon: CreditCard },
+    { id: 'os-renewals', label: 'Renewals & Due Dates', icon: CalendarClock },
+    { id: 'os-followups', label: 'Follow-ups', icon: PhoneCall },
+    { id: 'os-documents', label: 'Documents & KYC', icon: FolderOpen },
+    { id: 'os-reports', label: 'Reports & Register', icon: FileSpreadsheet },
   ];
 
-  // Salesman Navigation
+  // 4. Salesman / Agent (7 Sections)
   const salesmanNav = [
     { id: 'sm-dashboard', label: 'My Dashboard', icon: LayoutGrid },
     { id: 'sm-customers', label: 'My Customers', icon: Users },
     { id: 'sm-policies', label: 'My Policies', icon: ShieldCheck },
+    { id: 'sm-renewals', label: 'My Renewals', icon: CalendarClock },
+    { id: 'sm-followups', label: 'My Follow-ups', icon: PhoneCall },
     { id: 'sm-commissions', label: 'My Commission', icon: Percent },
+    { id: 'sm-profile', label: 'My Profile & Docs', icon: UserCheck },
   ];
 
   const navItems =
@@ -114,38 +140,67 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSelectSectio
   }, [workspaceSubtitle]);
 
   return (
-    <aside className="w-[245px] bg-[#FBF9F5] text-slate-700 flex flex-col h-screen fixed top-0 left-0 z-30 border-r border-[#E7E2D6] font-sans">
-      {/* Brand Header */}
-      <div className="px-5 py-4 border-b border-[#EAE4D8] flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-[#C05D34] text-white flex items-center justify-center shrink-0 shadow-2xs">
-          <Shield className="w-4.5 h-4.5 stroke-[2.2]" />
-        </div>
-        <div>
-          <div className="font-serif font-bold text-[16px] text-[#1A2533] leading-none tracking-tight">ProSurance</div>
-          <div className="text-[10px] text-[#717E90] font-sans font-semibold tracking-wider uppercase mt-1">
-            {workspaceSubtitle}
-          </div>
-        </div>
-      </div>
+    <>
+      {/* Mobile Drawer Backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-[#1A2533]/50 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-300"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
-      {/* Navigation */}
-      <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1">
-        <div className="px-3 pt-1 pb-2 text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider font-mono">
-          {sectionHeading}
+      <aside
+        className={`w-[260px] bg-[#FBF9F5] text-slate-700 flex flex-col h-screen fixed top-0 left-0 z-50 border-r border-[#E7E2D6] font-sans transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
+        {/* Brand Header */}
+        <div className="px-5 py-4 border-b border-[#EAE4D8] flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#C05D34] text-white flex items-center justify-center shrink-0 shadow-2xs">
+              <Shield className="w-4.5 h-4.5 stroke-[2.2]" />
+            </div>
+            <div>
+              <div className="font-bold text-[15px] text-slate-900 leading-none tracking-tight">ProSurance</div>
+              <div className="text-[10.5px] text-slate-500 font-medium tracking-wide mt-1">
+                {workspaceSubtitle}
+              </div>
+            </div>
+          </div>
+
+          {/* Close button on mobile */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-[#F2ECE1] transition cursor-pointer"
+            aria-label="Close sidebar"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = currentSection === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => onSelectSection(item.id)}
-              className={`w-full group flex items-center justify-between px-2 py-2.5 rounded-md text-[14px] transition-colors text-left ${
-                active
-                  ? 'text-[#1A2533] font-semibold'
-                  : 'text-[#4A5666] font-normal hover:text-[#1A2533] hover:bg-[#F2ECE1]/50'
-              }`}
-            >
+
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1">
+          <div className="px-3 pt-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+            {sectionHeading}
+          </div>
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = currentSection === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  onSelectSection(item.id);
+                  if (onClose) onClose();
+                }}
+                className={`w-full group flex items-center justify-between px-2 py-2.5 rounded-md text-[14px] transition-colors text-left ${
+                  active
+                    ? 'text-[#1A2533] font-semibold'
+                    : 'text-[#4A5666] font-normal hover:text-[#1A2533] hover:bg-[#F2ECE1]/50'
+                }`}
+              >
               <div className="flex items-center gap-2.5">
                 {/* Vertical Pill Indicator (Figma 1:1) */}
                 <span
@@ -173,7 +228,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSelectSectio
       {/* Profile Footer (Matching Figma 1:1) */}
       <div className="p-3 border-t border-[#EAE4D8] bg-[#FBF9F5] flex items-center justify-between">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-7 h-7 rounded-full bg-[#E8E1D3] text-[#1A2533] font-serif font-bold text-[11.5px] flex items-center justify-center shrink-0 border border-[#D5CDBC]">
+          <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-800 font-semibold text-[11px] flex items-center justify-center shrink-0 border border-slate-300">
             {initials}
           </div>
           <div className="min-w-0">
@@ -194,5 +249,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentSection, onSelectSectio
         </button>
       </div>
     </aside>
-  );
+  </>
+);
 };

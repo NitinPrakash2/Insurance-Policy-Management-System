@@ -134,4 +134,48 @@ export class CustomersService {
     }
     return { success: true };
   }
+
+  async removeMany(companyId: string, ids: string[]) {
+    const objectIds = ids.map((id) => new Types.ObjectId(id));
+    const policies = await this.policyModel
+      .find({
+        companyId: new Types.ObjectId(companyId),
+        customerId: { $in: objectIds },
+      })
+      .select('customerId');
+    const blockedIds = new Set(policies.map((p) => p.customerId.toString()));
+    const allowedIds = objectIds.filter((id) => !blockedIds.has(id.toString()));
+
+    const res = await this.customerModel.deleteMany({
+      _id: { $in: allowedIds },
+      companyId: new Types.ObjectId(companyId),
+    });
+
+    this.eventsGateway.broadcastToWorkspace(companyId, 'CUSTOMERS_DELETED', { count: res.deletedCount });
+    return {
+      deletedCount: res.deletedCount,
+      blockedCount: blockedIds.size,
+    };
+  }
+
+  async clearAll(companyId: string) {
+    const policies = await this.policyModel
+      .find({
+        companyId: new Types.ObjectId(companyId),
+      })
+      .select('customerId');
+    const blockedIds = new Set(policies.map((p) => p.customerId.toString()));
+
+    const query: any = { companyId: new Types.ObjectId(companyId) };
+    if (blockedIds.size > 0) {
+      query._id = { $nin: Array.from(blockedIds).map((id) => new Types.ObjectId(id)) };
+    }
+
+    const res = await this.customerModel.deleteMany(query);
+    this.eventsGateway.broadcastToWorkspace(companyId, 'CUSTOMERS_CLEARED', { count: res.deletedCount });
+    return {
+      deletedCount: res.deletedCount,
+      retainedCount: blockedIds.size,
+    };
+  }
 }
