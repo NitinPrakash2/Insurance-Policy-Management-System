@@ -98,7 +98,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
       setCompanies([...companies, created]);
       setShowCreateModal(false);
       setNewCompany({ name: '', slug: '', adminName: '', adminEmail: '', maxSlots: 10, address: '', phone: '' });
-      alert(`Company workspace ${created.name} provisioned in MongoDB!`);
+      alert(`Company workspace ${created.name} provisioned successfully!`);
     } catch (err: any) {
       alert(`Error creating company: ${err.message}`);
     }
@@ -189,7 +189,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
                 Platform Overview
               </h1>
               <p className="text-xs text-[#6F7C8E] mt-1">
-                Live tenant organizations from MongoDB: {companies.length} registered organizations.
+                Registered tenant organizations: {companies.length} active companies.
               </p>
             </div>
 
@@ -365,7 +365,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
                 All Broker Companies
               </h1>
               <p className="text-xs text-[#6F7C8E] mt-1">
-                Active tenants from MongoDB: {companies.length} records.
+                Active brokerage accounts: {companies.length} registered.
               </p>
             </div>
 
@@ -454,7 +454,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
                 Provision New Company Workspace
               </h1>
               <p className="text-xs text-[#6F7C8E] mt-1">
-                Create an isolated MongoDB brokerage workspace and assign Company Admin.
+                Provision a dedicated brokerage workspace and assign Company Admin.
               </p>
             </div>
           </div>
@@ -527,7 +527,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
                   type="submit"
                   className="px-5 py-2 bg-[#C05D34] hover:bg-[#A94F2B] text-white text-xs font-semibold rounded shadow-2xs"
                 >
-                  Save to MongoDB
+                  Provision Workspace
                 </button>
               </div>
             </form>
@@ -672,7 +672,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
                 Platform Audit Logs
               </h1>
               <p className="text-xs text-[#6F7C8E] mt-1">
-                Real audit records from MongoDB: {auditLogs.length} events logged.
+                Security audit trail: {auditLogs.length} events logged.
               </p>
             </div>
           </div>

@@ -160,7 +160,7 @@ export const SalesmanPanel: React.FC<SalesmanPanelProps> = ({ currentSection }) 
                 </div>
               </div>
               <div className="mt-4 pt-2.5 border-t border-[#F2EDE2] text-xs text-teal font-medium">
-                Live from MongoDB
+                Live Records
               </div>
             </div>
 
@@ -245,7 +245,7 @@ export const SalesmanPanel: React.FC<SalesmanPanelProps> = ({ currentSection }) 
                 My Client Contacts & Leads
               </h1>
               <p className="text-xs text-[#6F7C8E] mt-1 font-sans">
-                Real customer leads from database: {customers.length} records.
+                Assigned client leads: {customers.length} contacts.
               </p>
             </div>
 
@@ -329,7 +329,7 @@ export const SalesmanPanel: React.FC<SalesmanPanelProps> = ({ currentSection }) 
                 My Policy Book
               </h1>
               <p className="text-xs text-[#6F7C8E] mt-1 font-sans">
-                Real database policies: {policies.length} records.
+                Active sourced policies: {policies.length} records.
               </p>
             </div>
 
@@ -448,7 +448,7 @@ export const SalesmanPanel: React.FC<SalesmanPanelProps> = ({ currentSection }) 
       <Modal
         isOpen={showAddLeadModal}
         onClose={() => setShowAddLeadModal(false)}
-        title="Add Prospect Lead to MongoDB"
+        title="Add Prospect Lead"
         maxWidth="max-w-md"
       >
         <form onSubmit={handleAddLeadSubmit} className="space-y-3">
@@ -496,7 +496,7 @@ export const SalesmanPanel: React.FC<SalesmanPanelProps> = ({ currentSection }) 
       <Modal
         isOpen={showRecordSaleModal}
         onClose={() => setShowRecordSaleModal(false)}
-        title="Record Sourced Policy in Database"
+        title="Record Sourced Policy"
         maxWidth="max-w-md"
       >
         <form onSubmit={handleRecordSaleSubmit} className="space-y-3">

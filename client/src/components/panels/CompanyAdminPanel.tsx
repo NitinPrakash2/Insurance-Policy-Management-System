@@ -361,7 +361,7 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
               </div>
 
               <span className="text-xs text-[#7A8696] font-mono">
-                Real-time MongoDB Records: {policies.length}
+                Total Policies: {policies.length}
               </span>
             </div>
 
@@ -446,13 +446,13 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               <div className="text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider font-mono mb-1">
-                COMPANY ADMIN / Real-time Customer Records
+                COMPANY ADMIN / Customers
               </div>
               <h1 className="text-3xl font-serif font-bold text-[#1A2533] tracking-tight leading-tight">
                 Customer Directory
               </h1>
               <p className="text-xs text-[#6F7C8E] mt-1">
-                Connected to MongoDB: {customers.length} client accounts recorded.
+                All active client accounts: {customers.length} records.
               </p>
             </div>
 
@@ -556,7 +556,7 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
                 Policy Records & Register
               </h1>
               <p className="text-xs text-[#6F7C8E] mt-1">
-                Real database policies: {policies.length} records.
+                Total active policies: {policies.length} records.
               </p>
             </div>
 
@@ -729,7 +729,7 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
             <div className="bg-white border border-[#E7E2D6] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
               <div className="pb-3 border-b border-[#F0EBE1]">
                 <h4 className="font-serif font-bold text-base text-[#1A2533]">Insurer Receivable Ledger</h4>
-                <p className="text-xs text-[#7A8696] mt-0.5">Real expected from insurers</p>
+                <p className="text-xs text-[#7A8696] mt-0.5">Expected receivable from insurers</p>
               </div>
 
               <div className="mt-5 grid grid-cols-3 gap-4">
@@ -764,7 +764,7 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
             <div className="bg-white border border-[#E7E2D6] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
               <div className="pb-3 border-b border-[#F0EBE1]">
                 <h4 className="font-serif font-bold text-base text-[#1A2533]">Salesman Commission Payable</h4>
-                <p className="text-xs text-[#7A8696] mt-0.5">Real payable to sales team</p>
+                <p className="text-xs text-[#7A8696] mt-0.5">Payable to agents & sales team</p>
               </div>
 
               <div className="mt-5 grid grid-cols-3 gap-4">
@@ -821,7 +821,7 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
             <Upload className="w-8 h-8 text-[#C05D34] mx-auto mb-2" />
             <h4 className="font-serif font-bold text-base text-[#1A2533]">Batch Import Customers & Policies</h4>
             <p className="text-xs text-[#6F7C8E] max-w-md mx-auto mt-1">
-              Upload customer spreadsheets (.xlsx, .csv). Records are validated and stored in your MongoDB tenant database.
+              Upload customer spreadsheets (.xlsx, .csv). Records are validated and securely imported.
             </p>
             <div className="mt-4">
               <button
@@ -1022,7 +1022,7 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
       <Modal
         isOpen={showAddCustomerModal}
         onClose={() => setShowAddCustomerModal(false)}
-        title="Add Real Customer to MongoDB"
+        title="Add New Customer"
         maxWidth="max-w-md"
       >
         <form onSubmit={handleAddCustomerSubmit} className="space-y-3">
@@ -1082,7 +1082,7 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
               type="submit"
               className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
             >
-              Save to MongoDB
+              Save Customer
             </button>
           </div>
         </form>
@@ -1092,7 +1092,7 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
       <Modal
         isOpen={showAddPolicyModal}
         onClose={() => setShowAddPolicyModal(false)}
-        title="Record Policy in MongoDB"
+        title="Record New Policy"
         maxWidth="max-w-md"
       >
         <form onSubmit={handleAddPolicySubmit} className="space-y-3">
@@ -1184,7 +1184,7 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
       <Modal
         isOpen={showAddEmployeeModal}
         onClose={() => setShowAddEmployeeModal(false)}
-        title="Add Staff User to MongoDB"
+        title="Add Staff Member"
         subtitle={`Slot Usage: ${usedSlots} of ${maxSlots} used (${maxSlots - usedSlots} slots remaining).`}
         maxWidth="max-w-md"
       >
@@ -1254,7 +1254,7 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
       <Modal
         isOpen={showLogCallModal}
         onClose={() => setShowLogCallModal(false)}
-        title="Log Real Follow-up to Backend"
+        title="Log Follow-up Call"
         subtitle={`Client: ${selectedCustomer?.name || 'Client'}`}
         maxWidth="max-w-md"
       >

@@ -181,7 +181,7 @@ export const OfficeStaffPanel: React.FC<OfficeStaffPanelProps> = ({ currentSecti
                 </div>
               </div>
               <div className="mt-4 pt-2.5 border-t border-[#F2EDE2] text-xs text-[#C05D34] font-medium">
-                Stored in MongoDB
+                Active Records
               </div>
             </div>
           </div>
@@ -253,7 +253,7 @@ export const OfficeStaffPanel: React.FC<OfficeStaffPanelProps> = ({ currentSecti
                 Customer Contacts & Support
               </h1>
               <p className="text-xs text-[#6F7C8E] mt-1 font-sans">
-                Real customer contacts from database: {customers.length} clients.
+                Registered clients: {customers.length} accounts.
               </p>
             </div>
 
@@ -337,7 +337,7 @@ export const OfficeStaffPanel: React.FC<OfficeStaffPanelProps> = ({ currentSecti
                 Policy Renewals & Payment Logging
               </h1>
               <p className="text-xs text-[#6F7C8E] mt-1 font-sans">
-                Real policies in database: {policies.length} records.
+                Total active policies: {policies.length} records.
               </p>
             </div>
           </div>
@@ -415,7 +415,7 @@ export const OfficeStaffPanel: React.FC<OfficeStaffPanelProps> = ({ currentSecti
             <Upload className="w-8 h-8 text-[#C05D34] mx-auto mb-2" />
             <h4 className="font-serif font-bold text-base text-[#1A2533]">Upload Policy Schedule / RC Copy</h4>
             <p className="text-xs text-[#7A8696] max-w-sm mx-auto mt-1">
-              Select verified customer document to attach to their MongoDB profile.
+              Select verified customer document to attach to their client profile.
             </p>
             <button
               onClick={() => alert('Select file from your computer...')}
@@ -431,7 +431,7 @@ export const OfficeStaffPanel: React.FC<OfficeStaffPanelProps> = ({ currentSecti
       <Modal
         isOpen={showAddCustomerModal}
         onClose={() => setShowAddCustomerModal(false)}
-        title="Add Customer Record to MongoDB"
+        title="Add Customer Record"
         maxWidth="max-w-md"
       >
         <form onSubmit={handleAddCustomer} className="space-y-3">
@@ -469,7 +469,7 @@ export const OfficeStaffPanel: React.FC<OfficeStaffPanelProps> = ({ currentSecti
               type="submit"
               className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
             >
-              Save to Database
+              Save Customer
             </button>
           </div>
         </form>
