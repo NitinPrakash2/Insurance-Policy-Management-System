@@ -145,15 +145,30 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
       setFollowups((prev) => [newFollow, ...prev]);
     });
 
+    const unsubscribeFollowupUpdated = socketService.on('FOLLOWUP_UPDATED', (updatedFollow) => {
+      setFollowups((prev) => prev.map((f) => (f._id === updatedFollow._id ? updatedFollow : f)));
+    });
+
     const unsubscribeEmployee = socketService.on('EMPLOYEE_CREATED', (newEmp) => {
       setEmployees((prev) => [...prev, newEmp]);
     });
 
+    const unsubscribeEmployeeUpdated = socketService.on('EMPLOYEE_UPDATED', (updatedEmp) => {
+      setEmployees((prev) => prev.map((e) => (e._id === updatedEmp._id || e.id === updatedEmp.id ? { ...e, ...updatedEmp } : e)));
+    });
+
+    const unsubscribeCustomerUpdated = socketService.on('CUSTOMER_UPDATED', (updatedCust) => {
+      setCustomers((prev) => prev.map((c) => (c._id === updatedCust._id ? updatedCust : c)));
+    });
+
     return () => {
       unsubscribeCustomer();
+      unsubscribeCustomerUpdated();
       unsubscribePolicy();
       unsubscribeFollowup();
+      unsubscribeFollowupUpdated();
       unsubscribeEmployee();
+      unsubscribeEmployeeUpdated();
     };
   }, []);
 

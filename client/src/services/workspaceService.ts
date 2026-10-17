@@ -76,7 +76,7 @@ export const workspaceService = {
   // Employees
   async getEmployees() {
     const res = await api.get('/employees');
-    return res.data;
+    return res.data?.employees || (Array.isArray(res.data) ? res.data : []);
   },
 
   async createEmployee(data: {

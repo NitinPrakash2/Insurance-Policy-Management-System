@@ -37,13 +37,16 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  // Broadcast event to a specific company workspace
+  // Broadcast event to a specific company workspace and globally to ensure instant reactivity across all client sessions
   broadcastToWorkspace(companyId: string, event: string, data: any) {
     if (this.server) {
-      this.logger.log(`📡 [WS] Broadcast '${event}' to workspace_${companyId}`);
-      this.server.to(`workspace_${companyId}`).emit(event, data);
-      // Also broadcast globally so Super Admin can observe platform activity live
-      this.server.emit('platform_activity', { companyId, event, data, timestamp: new Date() });
+      const cIdStr = companyId?.toString();
+      this.logger.log(`📡 [WS] Broadcast '${event}' to workspace_${cIdStr}`);
+      this.server.to(`workspace_${cIdStr}`).emit(event, data);
+      // Emit event globally so all browser sessions/tabs with active subscriptions reflect instantly
+      this.server.emit(event, data);
+      // Also broadcast to platform activity stream for Super Admin monitoring
+      this.server.emit('platform_activity', { companyId: cIdStr, event, data, timestamp: new Date() });
     }
   }
 
@@ -52,6 +55,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (this.server) {
       this.logger.log(`🌐 [WS] Broadcast '${event}' to all connected clients`);
       this.server.emit(event, data);
+      this.server.emit('platform_activity', { event, data, timestamp: new Date() });
     }
   }
 }

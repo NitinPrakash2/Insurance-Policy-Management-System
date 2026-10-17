@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { Company, CompanyDocument, CompanyStatus } from '../../schemas/company.schema.js';
 import { User, UserDocument, UserRole, UserStatus } from '../../schemas/user.schema.js';
 import { AuditLog, AuditLogDocument } from '../../schemas/audit-log.schema.js';
+import { EventsGateway } from '../../events/events.gateway.js';
 
 @Injectable()
 export class CompaniesService {
@@ -12,6 +13,7 @@ export class CompaniesService {
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
+    private eventsGateway: EventsGateway,
   ) {}
 
   async getPlatformOverview() {
@@ -128,6 +130,7 @@ export class CompaniesService {
       details: { companyName: company.name, adminEmail: admin.email, maxSlots: company.maxSlots },
     });
 
+    this.eventsGateway.broadcastPlatform('COMPANY_CREATED', company);
     return { company, admin: { id: admin._id, name: admin.name, email: admin.email } };
   }
 
@@ -157,6 +160,7 @@ export class CompaniesService {
       details: { reason: reason || 'Status toggled from console' },
     });
 
+    this.eventsGateway.broadcastPlatform('COMPANY_UPDATED', company);
     return company;
   }
 
@@ -169,6 +173,7 @@ export class CompaniesService {
     if (!company) {
       throw new NotFoundException('Company not found');
     }
+    this.eventsGateway.broadcastPlatform('COMPANY_UPDATED', company);
     return company;
   }
 
@@ -178,6 +183,7 @@ export class CompaniesService {
       throw new NotFoundException('Company not found');
     }
     await this.userModel.deleteMany({ companyId: id });
+    this.eventsGateway.broadcastPlatform('COMPANY_DELETED', { id, name: company.name });
     return { success: true, message: `Company ${company.name} deleted` };
   }
 }

@@ -28,6 +28,7 @@ export const SalesmanPanel: React.FC<SalesmanPanelProps> = ({ currentSection }) 
   const [loading, setLoading] = useState(false);
   const [policies, setPolicies] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [insurers, setInsurers] = useState<any[]>([]);
   const [commSummary, setCommSummary] = useState<any>(null);
   const [search, setSearch] = useState('');
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
@@ -37,6 +38,7 @@ export const SalesmanPanel: React.FC<SalesmanPanelProps> = ({ currentSection }) 
   const [newSale, setNewSale] = useState({
     policyNumber: '',
     customerId: '',
+    insurerId: '',
     type: 'Motor',
     premium: '',
     sumInsured: '',
@@ -46,14 +48,16 @@ export const SalesmanPanel: React.FC<SalesmanPanelProps> = ({ currentSection }) 
   const loadSalesmanData = async () => {
     try {
       setLoading(true);
-      const [pList, cList, cSum] = await Promise.all([
+      const [pList, cList, cSum, iList] = await Promise.all([
         workspaceService.getPolicies().catch(() => []),
         workspaceService.getCustomers().catch(() => []),
         workspaceService.getCommissionSummary().catch(() => null),
+        workspaceService.getInsurers().catch(() => []),
       ]);
-      setPolicies(pList);
-      setCustomers(cList);
+      setPolicies(Array.isArray(pList) ? pList : []);
+      setCustomers(Array.isArray(cList) ? cList : []);
       setCommSummary(cSum);
+      setInsurers(Array.isArray(iList) ? iList : []);
     } catch (err) {
       console.error('Failed to load salesman data', err);
     } finally {
@@ -72,9 +76,14 @@ export const SalesmanPanel: React.FC<SalesmanPanelProps> = ({ currentSection }) 
       setCustomers((prev) => [newC, ...prev]);
     });
 
+    const unsubCustomerUpdated = socketService.on('CUSTOMER_UPDATED', (updatedC) => {
+      setCustomers((prev) => prev.map((c) => (c._id === updatedC._id ? updatedC : c)));
+    });
+
     return () => {
       unsubPolicy();
       unsubCustomer();
+      unsubCustomerUpdated();
     };
   }, []);
 
@@ -93,11 +102,23 @@ export const SalesmanPanel: React.FC<SalesmanPanelProps> = ({ currentSection }) 
   const handleRecordSaleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const chosenCustomerId = newSale.customerId || customers[0]?._id;
+      const chosenInsurerId = newSale.insurerId || insurers[0]?._id;
+
+      if (!chosenCustomerId) {
+        alert('Please select or add a client contact first.');
+        return;
+      }
+      if (!chosenInsurerId) {
+        alert('No underwriting insurer available.');
+        return;
+      }
+
       const created = await workspaceService.createPolicy({
         policyNumber: newSale.policyNumber,
-        customerId: newSale.customerId || customers[0]?._id,
-        insurerId: '660000000000000000000003', // HDFC ERGO
-        salesmanId: user?.id || '660000000000000000000004',
+        customerId: chosenCustomerId,
+        insurerId: chosenInsurerId,
+        salesmanId: user?.id || '',
         type: newSale.type,
         sumInsured: Number(newSale.sumInsured) || 500000,
         premium: Number(newSale.premium) || 15000,
@@ -107,14 +128,16 @@ export const SalesmanPanel: React.FC<SalesmanPanelProps> = ({ currentSection }) 
 
       setPolicies([created, ...policies]);
       setShowRecordSaleModal(false);
-      setNewSale({ policyNumber: '', customerId: '', type: 'Motor', premium: '', sumInsured: '', expiryDate: '' });
+      setNewSale({ policyNumber: '', customerId: '', insurerId: '', type: 'Motor', premium: '', sumInsured: '', expiryDate: '' });
     } catch (err: any) {
       alert(`Error recording sale: ${err.message}`);
     }
   };
 
-  const totalEarned = commSummary?.salesmanEarnedTotal || 4263;
-  const totalPaid = commSummary?.salesmanPaidTotal || 1920;
+  const totalPremium = (policies || []).reduce((acc, p) => acc + (Number(p?.premium) || 0), 0);
+  const commRate = Number(user?.defaultCommissionRate) || 8;
+  const totalEarned = commSummary?.salesmanEarnedTotal ?? Math.round(totalPremium * (commRate / 100));
+  const totalPaid = commSummary?.salesmanPaidTotal ?? 0;
   const pendingPayout = Math.max(0, totalEarned - totalPaid);
 
   return (
@@ -522,6 +545,18 @@ export const SalesmanPanel: React.FC<SalesmanPanelProps> = ({ currentSection }) 
               placeholder="18000"
             />
           </div>
+          <Dropdown
+            label="Client Customer"
+            value={newSale.customerId || (customers[0]?._id || '')}
+            onChange={(val) => setNewSale({ ...newSale, customerId: val })}
+            options={customers.map((c) => ({ value: c._id, label: `${c.name} (${c.phone})` }))}
+          />
+          <Dropdown
+            label="Underwriting Insurer"
+            value={newSale.insurerId || (insurers[0]?._id || '')}
+            onChange={(val) => setNewSale({ ...newSale, insurerId: val })}
+            options={insurers.map((ins) => ({ value: ins._id, label: `${ins.name} (${ins.code || ''})` }))}
+          />
           <Dropdown
             label="Insurance Type"
             value={newSale.type}

@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { User, UserDocument, UserRole, UserStatus } from '../../schemas/user.schema.js';
 import { Company, CompanyDocument } from '../../schemas/company.schema.js';
 import { Policy, PolicyDocument } from '../../schemas/policy.schema.js';
+import { EventsGateway } from '../../events/events.gateway.js';
 
 @Injectable()
 export class EmployeesService {
@@ -12,6 +13,7 @@ export class EmployeesService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Company.name) private companyModel: Model<CompanyDocument>,
     @InjectModel(Policy.name) private policyModel: Model<PolicyDocument>,
+    private eventsGateway: EventsGateway,
   ) {}
 
   async findAll(companyId: string) {
@@ -92,14 +94,20 @@ export class EmployeesService {
       permissions: data.permissions || [],
     });
 
-    return {
-      id: employee._id,
+    const result = {
+      _id: employee._id.toString(),
+      id: employee._id.toString(),
       name: employee.name,
       email: employee.email,
       role: employee.role,
+      phone: employee.phone,
+      status: employee.status,
       salesmanCode: employee.salesmanCode,
       defaultCommissionRate: employee.defaultCommissionRate,
     };
+
+    this.eventsGateway.broadcastToWorkspace(companyId, 'EMPLOYEE_CREATED', result);
+    return result;
   }
 
   async update(companyId: string, id: string, data: any) {
@@ -141,6 +149,8 @@ export class EmployeesService {
     }
 
     await employee.save();
-    return { id: employee._id, status: employee.status };
+    const result = { _id: employee._id.toString(), id: employee._id.toString(), status: employee.status };
+    this.eventsGateway.broadcastToWorkspace(companyId, 'EMPLOYEE_UPDATED', result);
+    return result;
   }
 }

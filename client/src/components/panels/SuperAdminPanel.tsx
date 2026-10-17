@@ -85,9 +85,19 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
       setCompanies((prev) => prev.map((c) => (c._id === updatedComp._id ? updatedComp : c)));
     });
 
+    const unsubCompanyCreated = socketService.on('COMPANY_CREATED', (newComp) => {
+      setCompanies((prev) => [newComp, ...prev.filter((c) => c._id !== newComp._id)]);
+    });
+
+    const unsubCompanyDeleted = socketService.on('COMPANY_DELETED', ({ id }) => {
+      setCompanies((prev) => prev.filter((c) => c._id !== id));
+    });
+
     return () => {
       unsubPlatform();
       unsubCompany();
+      unsubCompanyCreated();
+      unsubCompanyDeleted();
     };
   }, []);
 

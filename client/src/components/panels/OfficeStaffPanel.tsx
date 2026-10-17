@@ -61,8 +61,16 @@ export const OfficeStaffPanel: React.FC<OfficeStaffPanelProps> = ({ currentSecti
       setTasks((prev) => [newF, ...prev]);
     });
 
+    const unsubFollowupUpdated = socketService.on('FOLLOWUP_UPDATED', (updatedF) => {
+      setTasks((prev) => prev.map((t) => (t._id === updatedF._id ? updatedF : t)));
+    });
+
     const unsubCustomer = socketService.on('CUSTOMER_CREATED', (newC) => {
       setCustomers((prev) => [newC, ...prev]);
+    });
+
+    const unsubCustomerUpdated = socketService.on('CUSTOMER_UPDATED', (updatedC) => {
+      setCustomers((prev) => prev.map((c) => (c._id === updatedC._id ? updatedC : c)));
     });
 
     const unsubPolicy = socketService.on('POLICY_CREATED', (newP) => {
@@ -71,7 +79,9 @@ export const OfficeStaffPanel: React.FC<OfficeStaffPanelProps> = ({ currentSecti
 
     return () => {
       unsubFollowup();
+      unsubFollowupUpdated();
       unsubCustomer();
+      unsubCustomerUpdated();
       unsubPolicy();
     };
   }, []);
