@@ -53,13 +53,13 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT || 5000;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   console.log(`INFO:     Started server process [${process.pid}]`);
   console.log(`INFO:     Waiting for application startup.`);
   console.log(`INFO:     Application startup complete.`);
-  console.log(`INFO:     Server running on http://127.0.0.1:${port} (Press CTRL+C to quit)`);
-  console.log(`INFO:     API Health: OK (http://127.0.0.1:${port}/api/v1/health)`);
+  console.log(`INFO:     Server running on port ${port} (Press CTRL+C to quit)`);
+  console.log(`INFO:     API Health: OK (http://0.0.0.0:${port}/api/v1/health)`);
 }
 
 await bootstrap();
