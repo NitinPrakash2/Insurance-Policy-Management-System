@@ -17,9 +17,11 @@ import {
   Lock,
   ArrowUpRight,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import { workspaceService } from '../../services/workspaceService';
 import { socketService } from '../../services/socket';
+import { Modal } from '../common/Modal';
 
 interface SuperAdminPanelProps {
   currentSection: string;
@@ -102,10 +104,14 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
     }
   };
 
-  const toggleCompanyStatus = async (id: string) => {
+  const toggleCompanyStatus = async (id: string, currentStatus?: string) => {
+    const nextStatus = currentStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
     try {
-      const updated = await workspaceService.toggleCompanyStatus(id);
-      setCompanies(companies.map((c) => (c._id === id ? { ...c, status: updated.status || (c.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE') } : c)));
+      const updated = await workspaceService.toggleCompanyStatus(id, nextStatus);
+      const finalStatus = updated?.status || nextStatus;
+      setCompanies((prev) =>
+        prev.map((c) => (c._id === id ? { ...c, status: finalStatus } : c))
+      );
     } catch (err: any) {
       alert(`Error toggling status: ${err.message}`);
     }
@@ -117,6 +123,18 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
       setCompanies(companies.map((c) => (c._id === id ? { ...c, maxSlots: Math.max(1, newSlots) } : c)));
     } catch (err: any) {
       alert(`Error updating slots: ${err.message}`);
+    }
+  };
+
+  const handleDeleteCompany = async (id: string, name: string) => {
+    if (!window.confirm(`Delete company "${name}"? This will permanently remove its tenant workspace.`)) {
+      return;
+    }
+    try {
+      await workspaceService.deleteCompany(id);
+      setCompanies((prev) => prev.filter((c) => c._id !== id));
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Failed to delete company');
     }
   };
 
@@ -171,7 +189,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
                 Platform Overview
               </h1>
               <p className="text-xs text-[#6F7C8E] mt-1">
-                Live broker workspaces from MongoDB: {companies.length} registered organizations.
+                Live tenant organizations from MongoDB: {companies.length} registered organizations.
               </p>
             </div>
 
@@ -304,12 +322,25 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
                         </span>
                       </td>
                       <td className="py-3.5 px-5 text-right">
-                        <button
-                          onClick={() => toggleCompanyStatus(c._id)}
-                          className="px-2.5 py-1 text-xs font-semibold bg-[#FAF8F5] hover:bg-[#F2ECE1] border border-[#D5CEBF] rounded transition"
-                        >
-                          {c.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => toggleCompanyStatus(c._id, c.status)}
+                            className={`px-2.5 py-1 text-xs font-semibold border rounded transition ${
+                              c.status === 'ACTIVE'
+                                ? 'bg-[#FAF8F5] text-rose-700 border-rose-200 hover:bg-rose-50'
+                                : 'bg-[#FAF8F5] text-emerald-700 border-emerald-200 hover:bg-emerald-50'
+                            }`}
+                          >
+                            {c.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCompany(c._id, c.name)}
+                            className="p-1 text-[#8E9AAB] hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded transition"
+                            title="Delete Company"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -380,12 +411,25 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
                         </span>
                       </td>
                       <td className="py-3.5 px-5 text-right">
-                        <button
-                          onClick={() => toggleCompanyStatus(c._id)}
-                          className="px-2.5 py-1 text-xs font-semibold bg-[#FAF8F5] hover:bg-[#F2ECE1] border border-[#D5CEBF] rounded transition"
-                        >
-                          {c.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => toggleCompanyStatus(c._id, c.status)}
+                            className={`px-2.5 py-1 text-xs font-semibold border rounded transition ${
+                              c.status === 'ACTIVE'
+                                ? 'bg-[#FAF8F5] text-rose-700 border-rose-200 hover:bg-rose-50'
+                                : 'bg-[#FAF8F5] text-emerald-700 border-emerald-200 hover:bg-emerald-50'
+                            }`}
+                          >
+                            {c.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCompany(c._id, c.name)}
+                            className="p-1 text-[#8E9AAB] hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded transition"
+                            title="Delete Company"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -537,7 +581,7 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
 
                 <div className="mt-4 pt-3 border-t border-[#F0EBE1] flex items-center justify-between">
                   <button
-                    onClick={() => toggleCompanyStatus(c._id)}
+                    onClick={() => toggleCompanyStatus(c._id, c.status)}
                     className="text-xs font-semibold text-[#C05D34] hover:underline"
                   >
                     {c.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
@@ -663,91 +707,92 @@ export const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ currentSection
       )}
 
       {/* Modal: Create Company */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl border border-[#DCD6C8] w-full max-w-lg p-6 shadow-elevated">
-            <h3 className="font-serif font-bold text-lg text-[#1A2533] mb-4">Provision Company to Database</h3>
-            <form onSubmit={handleCreateCompany} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Company Legal Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newCompany.name}
-                  onChange={(e) => setNewCompany({ ...newCompany, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
-                  placeholder="e.g. Vanguard Insurance Advisors"
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Workspace Slug</label>
-                  <input
-                    type="text"
-                    required
-                    value={newCompany.slug}
-                    onChange={(e) => setNewCompany({ ...newCompany, slug: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs font-mono focus:outline-none focus:border-[#C05D34]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Employee Slots</label>
-                  <input
-                    type="number"
-                    required
-                    min={1}
-                    value={newCompany.maxSlots}
-                    onChange={(e) => setNewCompany({ ...newCompany, maxSlots: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs font-mono focus:outline-none focus:border-[#C05D34]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Admin Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={newCompany.adminName}
-                    onChange={(e) => setNewCompany({ ...newCompany, adminName: e.target.value })}
-                    placeholder="Deepak Verma"
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Admin Email</label>
-                  <input
-                    type="email"
-                    required
-                    value={newCompany.adminEmail}
-                    onChange={(e) => setNewCompany({ ...newCompany, adminEmail: e.target.value })}
-                    placeholder="deepak@vanguard.in"
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
-                >
-                  Save Workspace
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Provision Company to Database"
+        subtitle="Create an isolated brokerage workspace with admin credentials"
+        maxWidth="max-w-lg"
+      >
+        <form onSubmit={handleCreateCompany} className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-[#1A2533] mb-1">Company Legal Name</label>
+            <input
+              type="text"
+              required
+              value={newCompany.name}
+              onChange={(e) => setNewCompany({ ...newCompany, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+              placeholder="e.g. Vanguard Insurance Advisors"
+              className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+            />
           </div>
-        </div>
-      )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-[#1A2533] mb-1">Workspace Slug</label>
+              <input
+                type="text"
+                required
+                value={newCompany.slug}
+                onChange={(e) => setNewCompany({ ...newCompany, slug: e.target.value })}
+                className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs font-mono focus:outline-none focus:border-[#C05D34]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#1A2533] mb-1">Employee Slots</label>
+              <input
+                type="number"
+                required
+                min={1}
+                value={newCompany.maxSlots}
+                onChange={(e) => setNewCompany({ ...newCompany, maxSlots: Number(e.target.value) })}
+                className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs font-mono focus:outline-none focus:border-[#C05D34]"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-[#1A2533] mb-1">Admin Name</label>
+              <input
+                type="text"
+                required
+                value={newCompany.adminName}
+                onChange={(e) => setNewCompany({ ...newCompany, adminName: e.target.value })}
+                placeholder="Deepak Verma"
+                className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#1A2533] mb-1">Admin Email</label>
+              <input
+                type="email"
+                required
+                value={newCompany.adminEmail}
+                onChange={(e) => setNewCompany({ ...newCompany, adminEmail: e.target.value })}
+                placeholder="deepak@vanguard.in"
+                className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+              />
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowCreateModal(false)}
+              className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
+            >
+              Save Workspace
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

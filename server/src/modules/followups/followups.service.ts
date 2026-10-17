@@ -11,9 +11,13 @@ export class FollowupsService {
     private eventsGateway: EventsGateway,
   ) {}
 
-  async findAll(companyId: string) {
+  async findAll(companyId?: string) {
+    let query: any = {};
+    if (companyId && Types.ObjectId.isValid(companyId) && companyId !== '660000000000000000000001') {
+      query = { companyId: new Types.ObjectId(companyId) };
+    }
     const list = await this.followUpModel
-      .find({ companyId: new Types.ObjectId(companyId) })
+      .find(query)
       .populate('customerId', 'name phone email city')
       .populate('policyId', 'policyNumber type premium')
       .populate('contactedBy', 'name role')

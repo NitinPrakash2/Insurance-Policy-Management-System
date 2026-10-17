@@ -24,6 +24,7 @@ import { workspaceService } from '../../services/workspaceService';
 import { socketService } from '../../services/socket';
 import { useAuth } from '../../context/AuthContext';
 import { Dropdown } from '../common/Dropdown';
+import { Modal } from '../common/Modal';
 
 interface CompanyAdminPanelProps {
   currentSection: string;
@@ -1018,291 +1019,286 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
       {/* MODALS WITH REAL REST API SUBMISSIONS                     */}
       {/* ========================================================= */}
       {/* 1. Add Customer Modal */}
-      {showAddCustomerModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl border border-[#DCD6C8] w-full max-w-md p-6 shadow-elevated">
-            <h3 className="font-serif font-bold text-lg text-[#1A2533] mb-4">Add Real Customer to MongoDB</h3>
-            <form onSubmit={handleAddCustomerSubmit} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newCustomer.name}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                  placeholder="e.g. Rahul Verma"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Mobile Number</label>
-                <input
-                  type="text"
-                  required
-                  value={newCustomer.phone}
-                  onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34] font-mono"
-                  placeholder="98220 99881"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={newCustomer.email}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                    placeholder="client@mail.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">City</label>
-                  <input
-                    type="text"
-                    value={newCustomer.city}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, city: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                    placeholder="Pune"
-                  />
-                </div>
-              </div>
-              <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddCustomerModal(false)}
-                  className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
-                >
-                  Save to MongoDB
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showAddCustomerModal}
+        onClose={() => setShowAddCustomerModal(false)}
+        title="Add Real Customer to MongoDB"
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleAddCustomerSubmit} className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-[#1A2533] mb-1">Full Name</label>
+            <input
+              type="text"
+              required
+              value={newCustomer.name}
+              onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+              className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+              placeholder="e.g. Rahul Verma"
+            />
           </div>
-        </div>
-      )}
+          <div>
+            <label className="block text-xs font-semibold text-[#1A2533] mb-1">Mobile Number</label>
+            <input
+              type="text"
+              required
+              value={newCustomer.phone}
+              onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+              className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34] font-mono"
+              placeholder="98220 99881"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-[#1A2533] mb-1">Email</label>
+              <input
+                type="email"
+                value={newCustomer.email}
+                onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+                placeholder="client@mail.com"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#1A2533] mb-1">City</label>
+              <input
+                type="text"
+                value={newCustomer.city}
+                onChange={(e) => setNewCustomer({ ...newCustomer, city: e.target.value })}
+                className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+                placeholder="Pune"
+              />
+            </div>
+          </div>
+          <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowAddCustomerModal(false)}
+              className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
+            >
+              Save to MongoDB
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* 2. Add Policy Modal */}
-      {showAddPolicyModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl border border-[#DCD6C8] w-full max-w-md p-6 shadow-elevated">
-            <h3 className="font-serif font-bold text-lg text-[#1A2533] mb-4">Record Policy in MongoDB</h3>
-            <form onSubmit={handleAddPolicySubmit} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Policy Number</label>
-                <input
-                  type="text"
-                  required
-                  value={newPolicy.policyNumber}
-                  onChange={(e) => setNewPolicy({ ...newPolicy, policyNumber: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs font-mono focus:outline-none focus:border-[#C05D34]"
-                  placeholder="e.g. HDFC-MOT-2026-9021"
-                />
-              </div>
-
-              <Dropdown
-                label="Customer"
-                value={newPolicy.customerId}
-                onChange={(val) => setNewPolicy({ ...newPolicy, customerId: val })}
-                options={customers.map((c) => ({
-                  value: c._id,
-                  label: c.name,
-                  sublabel: c.phone,
-                }))}
-                placeholder="Select Customer"
-              />
-
-              <div className="grid grid-cols-2 gap-3">
-                <Dropdown
-                  label="Insurer"
-                  value={newPolicy.insurerId}
-                  onChange={(val) => setNewPolicy({ ...newPolicy, insurerId: val })}
-                  options={insurers.map((ins) => ({
-                    value: ins._id,
-                    label: ins.name,
-                  }))}
-                  placeholder="Select Insurer"
-                />
-                <Dropdown
-                  label="Line / Type"
-                  value={newPolicy.type}
-                  onChange={(val) => setNewPolicy({ ...newPolicy, type: val })}
-                  options={['Motor', 'Health', 'Life', 'Commercial']}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Gross Premium (₹)</label>
-                  <input
-                    type="number"
-                    required
-                    value={newPolicy.premium}
-                    onChange={(e) => setNewPolicy({ ...newPolicy, premium: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs font-mono focus:outline-none focus:border-[#C05D34]"
-                    placeholder="25000"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Expiry Date</label>
-                  <input
-                    type="date"
-                    value={newPolicy.expiryDate}
-                    onChange={(e) => setNewPolicy({ ...newPolicy, expiryDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddPolicyModal(false)}
-                  className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
-                >
-                  Create & Broadcast
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showAddPolicyModal}
+        onClose={() => setShowAddPolicyModal(false)}
+        title="Record Policy in MongoDB"
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleAddPolicySubmit} className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-[#1A2533] mb-1">Policy Number</label>
+            <input
+              type="text"
+              required
+              value={newPolicy.policyNumber}
+              onChange={(e) => setNewPolicy({ ...newPolicy, policyNumber: e.target.value })}
+              className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs font-mono focus:outline-none focus:border-[#C05D34]"
+              placeholder="e.g. HDFC-MOT-2026-9021"
+            />
           </div>
-        </div>
-      )}
+
+          <Dropdown
+            label="Customer"
+            value={newPolicy.customerId}
+            onChange={(val) => setNewPolicy({ ...newPolicy, customerId: val })}
+            options={customers.map((c) => ({
+              value: c._id,
+              label: c.name,
+              sublabel: c.phone,
+            }))}
+            placeholder="Select Customer"
+          />
+
+          <div className="grid grid-cols-2 gap-3">
+            <Dropdown
+              label="Insurer"
+              value={newPolicy.insurerId}
+              onChange={(val) => setNewPolicy({ ...newPolicy, insurerId: val })}
+              options={insurers.map((ins) => ({
+                value: ins._id,
+                label: ins.name,
+              }))}
+              placeholder="Select Insurer"
+            />
+            <Dropdown
+              label="Line / Type"
+              value={newPolicy.type}
+              onChange={(val) => setNewPolicy({ ...newPolicy, type: val })}
+              options={['Motor', 'Health', 'Life', 'Commercial']}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-[#1A2533] mb-1">Gross Premium (₹)</label>
+              <input
+                type="number"
+                required
+                value={newPolicy.premium}
+                onChange={(e) => setNewPolicy({ ...newPolicy, premium: e.target.value })}
+                className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs font-mono focus:outline-none focus:border-[#C05D34]"
+                placeholder="25000"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#1A2533] mb-1">Expiry Date</label>
+              <input
+                type="date"
+                value={newPolicy.expiryDate}
+                onChange={(e) => setNewPolicy({ ...newPolicy, expiryDate: e.target.value })}
+                className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+              />
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowAddPolicyModal(false)}
+              className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
+            >
+              Create & Broadcast
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* 3. Add Employee Modal */}
-      {showAddEmployeeModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl border border-[#DCD6C8] w-full max-w-md p-6 shadow-elevated">
-            <h3 className="font-serif font-bold text-lg text-[#1A2533] mb-2">Add Staff User to MongoDB</h3>
-            <p className="text-xs text-[#7A8696] mb-4">
-              Slot Usage: {usedSlots} of {maxSlots} used ({maxSlots - usedSlots} slots remaining).
-            </p>
-
-            <form onSubmit={handleAddEmployeeSubmit} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newEmployee.name}
-                  onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                  placeholder="e.g. Pooja Rathi"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  value={newEmployee.email}
-                  onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                  placeholder="pooja@shreeadvisors.in"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Dropdown
-                  label="Role"
-                  value={newEmployee.role}
-                  onChange={(val) => setNewEmployee({ ...newEmployee, role: val })}
-                  options={[
-                    { value: 'OFFICE_STAFF', label: 'Office Staff' },
-                    { value: 'SALESMAN', label: 'Salesman / Agent' },
-                  ]}
-                />
-                <div>
-                  <label className="block text-xs font-semibold text-[#1A2533] mb-1">Phone</label>
-                  <input
-                    type="text"
-                    value={newEmployee.phone}
-                    onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34] font-mono"
-                    placeholder="98220 12099"
-                  />
-                </div>
-              </div>
-              <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddEmployeeModal(false)}
-                  className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
-                >
-                  Activate Slot & Save
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showAddEmployeeModal}
+        onClose={() => setShowAddEmployeeModal(false)}
+        title="Add Staff User to MongoDB"
+        subtitle={`Slot Usage: ${usedSlots} of ${maxSlots} used (${maxSlots - usedSlots} slots remaining).`}
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleAddEmployeeSubmit} className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-[#1A2533] mb-1">Full Name</label>
+            <input
+              type="text"
+              required
+              value={newEmployee.name}
+              onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
+              className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+              placeholder="e.g. Pooja Rathi"
+            />
           </div>
-        </div>
-      )}
+          <div>
+            <label className="block text-xs font-semibold text-[#1A2533] mb-1">Email Address</label>
+            <input
+              type="email"
+              required
+              value={newEmployee.email}
+              onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
+              className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+              placeholder="pooja@shreeadvisors.in"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Dropdown
+              label="Role"
+              value={newEmployee.role}
+              onChange={(val) => setNewEmployee({ ...newEmployee, role: val })}
+              options={[
+                { value: 'OFFICE_STAFF', label: 'Office Staff' },
+                { value: 'SALESMAN', label: 'Salesman / Agent' },
+              ]}
+            />
+            <div>
+              <label className="block text-xs font-semibold text-[#1A2533] mb-1">Phone</label>
+              <input
+                type="text"
+                value={newEmployee.phone}
+                onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
+                className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34] font-mono"
+                placeholder="98220 12099"
+              />
+            </div>
+          </div>
+          <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowAddEmployeeModal(false)}
+              className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
+            >
+              Activate Slot & Save
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* 4. Log Call Modal */}
-      {showLogCallModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl border border-[#DCD6C8] w-full max-w-md p-6 shadow-elevated">
-            <h3 className="font-serif font-bold text-lg text-[#1A2533] mb-2">Log Real Follow-up to Backend</h3>
-            <p className="text-xs text-[#7A8696] mb-4">
-              Client: <strong className="text-[#1A2533]">{selectedCustomer?.name || 'Client'}</strong>
-            </p>
-            <form onSubmit={handleLogCallSubmit} className="space-y-3">
-              <Dropdown
-                label="Call Outcome"
-                value={callResult}
-                onChange={(val) => setCallResult(val)}
-                options={[
-                  'Promise to Pay',
-                  'Callback Requested',
-                  'Answered / Discussed',
-                  'Renewal Confirmed',
-                  'Not Reachable / Busy',
-                ]}
-              />
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Conversation Notes</label>
-                <textarea
-                  rows={3}
-                  required
-                  value={callNotes}
-                  onChange={(e) => setCallNotes(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                  placeholder="e.g. Client agreed to make cheque payment by Saturday 2pm."
-                ></textarea>
-              </div>
-              <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowLogCallModal(false)}
-                  className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
-                >
-                  Save Call & Broadcast
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showLogCallModal}
+        onClose={() => setShowLogCallModal(false)}
+        title="Log Real Follow-up to Backend"
+        subtitle={`Client: ${selectedCustomer?.name || 'Client'}`}
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleLogCallSubmit} className="space-y-3">
+          <Dropdown
+            label="Call Outcome"
+            value={callResult}
+            onChange={(val) => setCallResult(val)}
+            options={[
+              'Promise to Pay',
+              'Callback Requested',
+              'Answered / Discussed',
+              'Renewal Confirmed',
+              'Not Reachable / Busy',
+            ]}
+          />
+          <div>
+            <label className="block text-xs font-semibold text-[#1A2533] mb-1">Conversation Notes</label>
+            <textarea
+              rows={3}
+              required
+              value={callNotes}
+              onChange={(e) => setCallNotes(e.target.value)}
+              className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+              placeholder="e.g. Client agreed to make cheque payment by Saturday 2pm."
+            ></textarea>
           </div>
-        </div>
-      )}
+          <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowLogCallModal(false)}
+              className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
+            >
+              Save Call & Broadcast
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

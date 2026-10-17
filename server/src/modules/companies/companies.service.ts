@@ -131,22 +131,30 @@ export class CompaniesService {
     return { company, admin: { id: admin._id, name: admin.name, email: admin.email } };
   }
 
-  async updateStatus(id: string, status: CompanyStatus, reason?: string) {
+  async updateStatus(id: string, status?: CompanyStatus, reason?: string) {
+    const current = await this.companyModel.findById(id);
+    if (!current) {
+      throw new NotFoundException('Company not found');
+    }
+
+    const targetStatus = status || (current.status === CompanyStatus.ACTIVE ? CompanyStatus.SUSPENDED : CompanyStatus.ACTIVE);
+
     const company = await this.companyModel.findByIdAndUpdate(
       id,
-      { status },
+      { status: targetStatus },
       { new: true },
     );
+
     if (!company) {
       throw new NotFoundException('Company not found');
     }
 
     await this.auditLogModel.create({
       actorRole: 'SUPER_ADMIN',
-      action: status === CompanyStatus.SUSPENDED ? 'COMPANY_SUSPENDED' : 'COMPANY_ACTIVATED',
+      action: targetStatus === CompanyStatus.SUSPENDED ? 'COMPANY_SUSPENDED' : 'COMPANY_ACTIVATED',
       entity: 'Company',
       entityId: company._id.toString(),
-      details: { reason },
+      details: { reason: reason || 'Status toggled from console' },
     });
 
     return company;
@@ -162,5 +170,14 @@ export class CompaniesService {
       throw new NotFoundException('Company not found');
     }
     return company;
+  }
+
+  async deleteCompany(id: string) {
+    const company = await this.companyModel.findByIdAndDelete(id);
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+    await this.userModel.deleteMany({ companyId: id });
+    return { success: true, message: `Company ${company.name} deleted` };
   }
 }

@@ -123,13 +123,18 @@ export const workspaceService = {
     return res.data;
   },
 
-  async toggleCompanyStatus(id: string) {
-    const res = await api.patch(`/companies/${id}/status`);
+  async toggleCompanyStatus(id: string, status?: string) {
+    const res = await api.patch(`/companies/${id}/status`, { status });
     return res.data;
   },
 
   async updateCompanySlots(id: string, maxSlots: number) {
     const res = await api.patch(`/companies/${id}/slots`, { maxSlots });
+    return res.data;
+  },
+
+  async deleteCompany(id: string) {
+    const res = await api.delete(`/companies/${id}`);
     return res.data;
   },
 

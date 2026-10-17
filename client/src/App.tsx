@@ -26,11 +26,11 @@ const WorkspaceShell: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F8F5F0] flex font-sans">
-      {/* Fixed Left Sidebar (230px) */}
+      {/* Fixed Left Sidebar (245px) */}
       <Sidebar currentSection={currentSection} onSelectSection={setCurrentSection} />
 
       {/* Main Content Viewport */}
-      <div className="flex-1 ml-[230px] flex flex-col min-h-screen">
+      <div className="flex-1 ml-[245px] flex flex-col min-h-screen">
         <main className="flex-1 px-8 py-4 max-w-[1340px] w-full mx-auto">
           {/* Top subtle bar: Ledger Warm indicator & Search box */}
           <Header />

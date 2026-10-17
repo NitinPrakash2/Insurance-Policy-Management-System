@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { workspaceService } from '../../services/workspaceService';
 import { socketService } from '../../services/socket';
+import { Modal } from '../common/Modal';
 
 interface OfficeStaffPanelProps {
   currentSection: string;
@@ -427,52 +428,52 @@ export const OfficeStaffPanel: React.FC<OfficeStaffPanelProps> = ({ currentSecti
       )}
 
       {/* Modal: Add Customer */}
-      {showAddCustomerModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl border border-[#DCD6C8] w-full max-w-md p-6 shadow-elevated">
-            <h3 className="font-serif font-bold text-lg text-[#1A2533] mb-4">Add Customer Record to MongoDB</h3>
-            <form onSubmit={handleAddCustomer} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newCust.name}
-                  onChange={(e) => setNewCust({ ...newCust, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                  placeholder="e.g. Ramesh Patil"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Mobile Number</label>
-                <input
-                  type="text"
-                  required
-                  value={newCust.phone}
-                  onChange={(e) => setNewCust({ ...newCust, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34] font-mono"
-                  placeholder="98220 11223"
-                />
-              </div>
-              <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddCustomerModal(false)}
-                  className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
-                >
-                  Save to Database
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showAddCustomerModal}
+        onClose={() => setShowAddCustomerModal(false)}
+        title="Add Customer Record to MongoDB"
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleAddCustomer} className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-[#1A2533] mb-1">Full Name</label>
+            <input
+              type="text"
+              required
+              value={newCust.name}
+              onChange={(e) => setNewCust({ ...newCust, name: e.target.value })}
+              className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+              placeholder="e.g. Ramesh Patil"
+            />
           </div>
-        </div>
-      )}
+          <div>
+            <label className="block text-xs font-semibold text-[#1A2533] mb-1">Mobile Number</label>
+            <input
+              type="text"
+              required
+              value={newCust.phone}
+              onChange={(e) => setNewCust({ ...newCust, phone: e.target.value })}
+              className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34] font-mono"
+              placeholder="98220 11223"
+            />
+          </div>
+          <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowAddCustomerModal(false)}
+              className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
+            >
+              Save to Database
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

@@ -27,7 +27,7 @@ export class PoliciesController {
   }
 
   @Post()
-  @Roles(UserRole.COMPANY_ADMIN, UserRole.OFFICE_STAFF)
+  @Roles(UserRole.COMPANY_ADMIN, UserRole.OFFICE_STAFF, UserRole.SALESMAN)
   async create(@Request() req: any, @Body() body: any) {
     if (!req.user.companyId) {
       throw new ForbiddenException('Tenant company context required');

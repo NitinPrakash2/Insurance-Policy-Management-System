@@ -76,8 +76,8 @@ export const LoginPage: React.FC = () => {
               <ShieldCheck className="w-6 h-6 stroke-[2.2]" />
             </div>
             <div>
-              <div className="font-serif font-bold text-lg text-[#1A2533] leading-none">Broker</div>
-              <div className="font-serif font-bold text-lg text-[#1A2533] leading-tight">Workspace</div>
+              <div className="font-serif font-bold text-xl text-[#1A2533] leading-none tracking-tight">ProSurance</div>
+              <div className="text-[11px] text-[#717E90] font-sans font-semibold tracking-wide mt-1">BROKER WORKSPACE</div>
             </div>
           </div>
 
@@ -116,7 +116,7 @@ export const LoginPage: React.FC = () => {
                 Records, not transactions
               </div>
               <p className="text-xs text-[#5E6877] mt-1 leading-normal">
-                Record payments and commissions. Broker Workspace does not collect or transfer money.
+                Record payments and commissions. ProSurance does not collect or transfer money.
               </p>
             </div>
           </div>
@@ -124,7 +124,7 @@ export const LoginPage: React.FC = () => {
 
         {/* Footer info */}
         <div className="mt-12 text-[11.5px] text-[#8C95A3] font-sans">
-          Broker Workspace · Responsive web workspace
+          ProSurance · Enterprise Broker Management Platform
         </div>
       </div>
 

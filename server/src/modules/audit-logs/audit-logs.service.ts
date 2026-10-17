@@ -12,7 +12,7 @@ export class AuditLogsService {
   async findAll() {
     return this.auditLogModel
       .find()
-      .populate('userId', 'name email role')
+      .populate('actorId', 'name email role')
       .populate('companyId', 'name slug')
       .sort({ createdAt: -1 })
       .limit(50);

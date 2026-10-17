@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { CompaniesService } from './companies.service.js';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../auth/guards/roles.guard.js';
@@ -49,5 +49,11 @@ export class CompaniesController {
   @Roles(UserRole.SUPER_ADMIN)
   async updateSlots(@Param('id') id: string, @Body('maxSlots') maxSlots: number) {
     return this.companiesService.updateSlots(id, maxSlots);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.SUPER_ADMIN)
+  async delete(@Param('id') id: string) {
+    return this.companiesService.deleteCompany(id);
   }
 }

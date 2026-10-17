@@ -15,6 +15,7 @@ import { useAuth } from '../../context/AuthContext';
 import { workspaceService } from '../../services/workspaceService';
 import { socketService } from '../../services/socket';
 import { Dropdown } from '../common/Dropdown';
+import { Modal } from '../common/Modal';
 
 interface SalesmanPanelProps {
   currentSection: string;
@@ -444,106 +445,106 @@ export const SalesmanPanel: React.FC<SalesmanPanelProps> = ({ currentSection }) 
       )}
 
       {/* Modal: Add Lead */}
-      {showAddLeadModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl border border-[#DCD6C8] w-full max-w-md p-6 shadow-elevated">
-            <h3 className="font-serif font-bold text-lg text-[#1A2533] mb-4">Add Prospect Lead to MongoDB</h3>
-            <form onSubmit={handleAddLeadSubmit} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Prospect Name</label>
-                <input
-                  type="text"
-                  required
-                  value={newLead.name}
-                  onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
-                  placeholder="e.g. Rahul Patil"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Phone Number</label>
-                <input
-                  type="text"
-                  required
-                  value={newLead.phone}
-                  onChange={(e) => setNewLead({ ...newLead, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34] font-mono"
-                  placeholder="98220 44331"
-                />
-              </div>
-              <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddLeadModal(false)}
-                  className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
-                >
-                  Save Lead
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showAddLeadModal}
+        onClose={() => setShowAddLeadModal(false)}
+        title="Add Prospect Lead to MongoDB"
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleAddLeadSubmit} className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-[#1A2533] mb-1">Prospect Name</label>
+            <input
+              type="text"
+              required
+              value={newLead.name}
+              onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
+              className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34]"
+              placeholder="e.g. Rahul Patil"
+            />
           </div>
-        </div>
-      )}
+          <div>
+            <label className="block text-xs font-semibold text-[#1A2533] mb-1">Phone Number</label>
+            <input
+              type="text"
+              required
+              value={newLead.phone}
+              onChange={(e) => setNewLead({ ...newLead, phone: e.target.value })}
+              className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34] font-mono"
+              placeholder="98220 44331"
+            />
+          </div>
+          <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowAddLeadModal(false)}
+              className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
+            >
+              Save Lead
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Modal: Record Sale */}
-      {showRecordSaleModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl border border-[#DCD6C8] w-full max-w-md p-6 shadow-elevated">
-            <h3 className="font-serif font-bold text-lg text-[#1A2533] mb-4">Record Sourced Policy in Database</h3>
-            <form onSubmit={handleRecordSaleSubmit} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Policy Number</label>
-                <input
-                  type="text"
-                  required
-                  value={newSale.policyNumber}
-                  onChange={(e) => setNewSale({ ...newSale, policyNumber: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34] font-mono"
-                  placeholder="e.g. HDFC-MOT-2026-0091"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#1A2533] mb-1">Gross Premium (₹)</label>
-                <input
-                  type="number"
-                  required
-                  value={newSale.premium}
-                  onChange={(e) => setNewSale({ ...newSale, premium: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34] font-mono"
-                  placeholder="18000"
-                />
-              </div>
-              <Dropdown
-                label="Insurance Type"
-                value={newSale.type}
-                onChange={(val) => setNewSale({ ...newSale, type: val })}
-                options={['Motor', 'Health', 'Life', 'Commercial']}
-              />
-              <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowRecordSaleModal(false)}
-                  className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
-                >
-                  Submit Policy
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showRecordSaleModal}
+        onClose={() => setShowRecordSaleModal(false)}
+        title="Record Sourced Policy in Database"
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleRecordSaleSubmit} className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-[#1A2533] mb-1">Policy Number</label>
+            <input
+              type="text"
+              required
+              value={newSale.policyNumber}
+              onChange={(e) => setNewSale({ ...newSale, policyNumber: e.target.value })}
+              className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34] font-mono"
+              placeholder="e.g. HDFC-MOT-2026-0091"
+            />
           </div>
-        </div>
-      )}
+          <div>
+            <label className="block text-xs font-semibold text-[#1A2533] mb-1">Gross Premium (₹)</label>
+            <input
+              type="number"
+              required
+              value={newSale.premium}
+              onChange={(e) => setNewSale({ ...newSale, premium: e.target.value })}
+              className="w-full px-3 py-2 border border-[#D5CEBF] rounded text-xs focus:outline-none focus:border-[#C05D34] font-mono"
+              placeholder="18000"
+            />
+          </div>
+          <Dropdown
+            label="Insurance Type"
+            value={newSale.type}
+            onChange={(val) => setNewSale({ ...newSale, type: val })}
+            options={['Motor', 'Health', 'Life', 'Commercial']}
+          />
+          <div className="pt-3 border-t border-[#F0EBE1] flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowRecordSaleModal(false)}
+              className="px-3 py-1.5 text-xs text-[#5E6877] hover:bg-[#FAF8F5] rounded font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-1.5 text-xs font-semibold bg-[#C05D34] hover:bg-[#A94F2B] text-white rounded transition shadow-2xs"
+            >
+              Submit Policy
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };
