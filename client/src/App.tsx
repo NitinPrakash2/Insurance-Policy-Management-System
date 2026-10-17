@@ -7,6 +7,7 @@ import { SuperAdminPanel } from './components/panels/SuperAdminPanel';
 import { CompanyAdminPanel } from './components/panels/CompanyAdminPanel';
 import { OfficeStaffPanel } from './components/panels/OfficeStaffPanel';
 import { SalesmanPanel } from './components/panels/SalesmanPanel';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 const WorkspaceShell: React.FC = () => {
   const { user } = useAuth();
@@ -48,8 +49,10 @@ const WorkspaceShell: React.FC = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <WorkspaceShell />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <WorkspaceShell />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

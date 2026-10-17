@@ -88,18 +88,45 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
         workspaceService.getCommissionLedger().catch(() => []),
       ]);
 
-      setCustomers(cList);
-      setPolicies(pList);
-      setFollowups(fList);
-      setEmployees(eList);
-      setInsurers(iList);
+      setCustomers(Array.isArray(cList) ? cList : []);
+      setPolicies(Array.isArray(pList) ? pList : []);
+      setFollowups(Array.isArray(fList) ? fList : []);
+      setEmployees(Array.isArray(eList) ? eList : []);
+      setInsurers(Array.isArray(iList) ? iList : []);
       setCommSummary(cSum);
-      setCommLedger(cLedg);
+      setCommLedger(Array.isArray(cLedg) ? cLedg : []);
     } catch (err) {
       console.error('Failed to load real data', err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleExportCSV = () => {
+    const list = Array.isArray(policies) ? policies : [];
+    if (list.length === 0) {
+      alert('No policy records to export.');
+      return;
+    }
+    const headers = ['Policy Number', 'Customer Name', 'Phone', 'Insurer', 'Policy Type', 'Gross Premium (INR)', 'Expiry Date', 'Status'];
+    const rows = list.map((p) => [
+      `"${p.policyNumber || ''}"`,
+      `"${p.customerId?.name || 'Client'}"`,
+      `"${p.customerId?.phone || ''}"`,
+      `"${p.insurerId?.name || 'Insurer'}"`,
+      `"${p.type || ''}"`,
+      p.premium || 0,
+      `"${p.expiryDate ? new Date(p.expiryDate).toLocaleDateString('en-IN') : ''}"`,
+      `"${p.status || 'Active'}"`,
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `ProSurance_Policy_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   useEffect(() => {
@@ -838,70 +865,244 @@ export const CompanyAdminPanel: React.FC<CompanyAdminPanelProps> = ({ currentSec
       {/* ========================================================= */}
       {/* SECTION 7: REPORTS                                        */}
       {/* ========================================================= */}
-      {activeSection === 'ca-reports' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <div className="text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider font-mono mb-1">
-                COMPANY ADMIN / Analytics
-              </div>
-              <h1 className="text-3xl font-serif font-bold text-[#1A2533] tracking-tight leading-tight">
-                Reports & Production
-              </h1>
-              <p className="text-xs text-[#6F7C8E] mt-1">
-                Calculated dynamically from {policies.length} in-force records.
-              </p>
-            </div>
-          </div>
+      {activeSection === 'ca-reports' && (() => {
+        const safePolicies = Array.isArray(policies) ? policies : [];
+        const safeInsurers = Array.isArray(insurers) ? insurers : [];
+        const safeEmployees = Array.isArray(employees) ? employees : [];
+        
+        const totalPremium = safePolicies.reduce((acc, p) => acc + (Number(p?.premium) || 0), 0);
+        const avgTicket = safePolicies.length > 0 ? Math.round(totalPremium / safePolicies.length) : 0;
+        
+        const policyTypes = ['Motor', 'Health', 'Life', 'Commercial'];
+        const typeBreakdown = policyTypes.map((t) => {
+          const typePol = safePolicies.filter((p) => (p?.type || '').toLowerCase() === t.toLowerCase());
+          const typePrem = typePol.reduce((acc, p) => acc + (Number(p?.premium) || 0), 0);
+          const percent = totalPremium > 0 ? Math.round((typePrem / totalPremium) * 100) : 0;
+          return { type: t, count: typePol.length, premium: typePrem, percent };
+        });
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="bg-white border border-[#E7E2D6] rounded-xl p-5">
-              <h4 className="font-serif font-bold text-sm text-[#1A2533] pb-2 border-b border-[#F0EBE1]">
-                Insurer Volume Breakdown
+        return (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <div className="text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider font-mono mb-1">
+                  COMPANY ADMIN / Analytics & Ledgers
+                </div>
+                <h1 className="text-3xl font-serif font-bold text-[#1A2533] tracking-tight leading-tight">
+                  Reports & Production Analytics
+                </h1>
+                <p className="text-xs text-[#6F7C8E] mt-1 font-sans">
+                  Dynamic production summaries calculated across {safePolicies.length} in-force policy contracts.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleExportCSV}
+                  className="px-3.5 py-1.5 border border-[#D5CEBF] bg-white hover:bg-[#FAF8F5] text-[#1A2533] text-xs font-semibold rounded flex items-center gap-1.5 transition shadow-2xs"
+                >
+                  <Download className="w-3.5 h-3.5 text-[#C05D34]" />
+                  <span>Export CSV</span>
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="px-3.5 py-1.5 bg-[#C05D34] hover:bg-[#A94F2B] text-white text-xs font-semibold rounded flex items-center gap-1.5 transition shadow-2xs"
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>Print Summary</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Executive KPI Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white border border-[#E7E2D6] rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+                <span className="text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider block font-mono">
+                  GROSS WRITTEN PREMIUM
+                </span>
+                <div className="mt-2 text-2xl font-serif font-bold text-[#1A2533]">
+                  ₹{totalPremium.toLocaleString('en-IN')}
+                </div>
+                <div className="mt-2 text-[11px] text-[#6F7C8E]">
+                  In-force premium book
+                </div>
+              </div>
+
+              <div className="bg-white border border-[#E7E2D6] rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+                <span className="text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider block font-mono">
+                  TOTAL IN-FORCE POLICIES
+                </span>
+                <div className="mt-2 text-2xl font-serif font-bold text-[#C05D34]">
+                  {safePolicies.length}
+                </div>
+                <div className="mt-2 text-[11px] text-[#6F7C8E]">
+                  Active policy accounts
+                </div>
+              </div>
+
+              <div className="bg-white border border-[#E7E2D6] rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+                <span className="text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider block font-mono">
+                  AVERAGE TICKET SIZE
+                </span>
+                <div className="mt-2 text-2xl font-serif font-bold text-[#1A2533]">
+                  ₹{avgTicket.toLocaleString('en-IN')}
+                </div>
+                <div className="mt-2 text-[11px] text-[#6F7C8E]">
+                  Mean premium per contract
+                </div>
+              </div>
+
+              <div className="bg-white border border-[#E7E2D6] rounded-xl p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+                <span className="text-[10px] font-bold text-[#8E9AAB] uppercase tracking-wider block font-mono">
+                  ACTIVE INSURERS
+                </span>
+                <div className="mt-2 text-2xl font-serif font-bold text-[#1A2533]">
+                  {safeInsurers.length}
+                </div>
+                <div className="mt-2 text-[11px] text-[#6F7C8E]">
+                  Registered underwriting partners
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Insurer Volume Breakdown */}
+              <div className="bg-white border border-[#E7E2D6] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+                <div className="pb-3 border-b border-[#F0EBE1] flex items-center justify-between">
+                  <h4 className="font-serif font-bold text-base text-[#1A2533]">
+                    Insurer Underwriting Breakdown
+                  </h4>
+                  <span className="text-xs text-[#7A8696] font-mono">
+                    {safeInsurers.length} Insurers
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {safeInsurers.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-[#8E9AAB]">
+                      No insurers configured. Insurers added in settings will appear here.
+                    </div>
+                  ) : (
+                    safeInsurers.map((ins) => {
+                      const insId = String(ins?._id || ins?.id || '');
+                      const insPolicies = safePolicies.filter((p) => {
+                        const pInsId = String(p?.insurerId?._id || p?.insurerId || '');
+                        return pInsId && pInsId === insId;
+                      });
+                      const insPremium = insPolicies.reduce((a, b) => a + (Number(b?.premium) || 0), 0);
+                      const share = totalPremium > 0 ? Math.round((insPremium / totalPremium) * 100) : 0;
+
+                      return (
+                        <div key={insId || Math.random()} className="p-3 bg-[#FAF8F5] rounded-lg border border-[#F2ECE1]">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="font-semibold text-[#1A2533]">{ins?.name || 'Underwriter'}</span>
+                            <span className="font-mono font-bold text-[#1A2533]">
+                              {insPolicies.length} policies · ₹{insPremium.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="flex-1 bg-[#E7E2D6] h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className="bg-[#C05D34] h-full rounded-full transition-all"
+                                style={{ width: `${Math.min(100, share)}%` }}
+                              />
+                            </div>
+                            <span className="font-mono text-[10px] text-[#7A8696] w-8 text-right">
+                              {share}%
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Sales Agent Production */}
+              <div className="bg-white border border-[#E7E2D6] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+                <div className="pb-3 border-b border-[#F0EBE1] flex items-center justify-between">
+                  <h4 className="font-serif font-bold text-base text-[#1A2533]">
+                    Sales Agent Production Leaderboard
+                  </h4>
+                  <span className="text-xs text-[#7A8696] font-mono">
+                    {safeEmployees.filter((e) => e?.role === 'SALESMAN').length} Agents
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {safeEmployees.filter((e) => e?.role === 'SALESMAN').length === 0 ? (
+                    <div className="p-6 text-center text-xs text-[#8E9AAB]">
+                      No sales agents assigned yet.
+                    </div>
+                  ) : (
+                    safeEmployees
+                      .filter((e) => e?.role === 'SALESMAN')
+                      .map((sm) => {
+                        const smId = String(sm?._id || sm?.id || '');
+                        const smPolicies = safePolicies.filter((p) => {
+                          const pSmId = String(p?.salesmanId?._id || p?.salesmanId || '');
+                          return pSmId && pSmId === smId;
+                        });
+                        const smPremium = smPolicies.reduce((a, b) => a + (Number(b?.premium) || 0), 0);
+                        const estComm = Math.round(smPremium * ((Number(sm?.defaultCommissionRate) || 8) / 100));
+
+                        return (
+                          <div key={smId || Math.random()} className="p-3 bg-[#FAF8F5] rounded-lg border border-[#F2ECE1] flex justify-between items-center text-xs">
+                            <div>
+                              <div className="font-semibold text-[#1A2533]">{sm?.name || 'Agent'}</div>
+                              <div className="text-[10px] text-[#7A8696] font-mono mt-0.5">
+                                Code: {sm?.salesmanCode || 'SV-01'} · Rate: {sm?.defaultCommissionRate || 8}%
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-mono font-bold text-[#1E7E34]">
+                                {smPolicies.length} policies · ₹{smPremium.toLocaleString('en-IN')}
+                              </div>
+                              <div className="text-[10px] font-mono text-[#7A8696] mt-0.5">
+                                Est. Comm: ₹{estComm.toLocaleString('en-IN')}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Policy Line of Business Breakdown */}
+            <div className="bg-white border border-[#E7E2D6] rounded-xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+              <h4 className="font-serif font-bold text-base text-[#1A2533] pb-3 border-b border-[#F0EBE1]">
+                Line of Business (LOB) Distribution
               </h4>
-              <div className="mt-4 space-y-2 text-xs">
-                {insurers.map((ins) => {
-                  const insPolicies = policies.filter((p) => p.insurerId?._id === ins._id || p.insurerId === ins._id);
-                  const insPremium = insPolicies.reduce((a, b) => a + (Number(b.premium) || 0), 0);
-                  return (
-                    <div key={ins._id} className="flex justify-between items-center p-2 bg-[#FAF8F5] rounded">
-                      <span className="font-medium text-[#1A2533]">{ins.name}</span>
-                      <span className="font-mono font-bold text-[#1A2533]">
-                        {insPolicies.length} policies · ₹{insPremium.toLocaleString('en-IN')}
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {typeBreakdown.map((tb) => (
+                  <div key={tb.type} className="p-3 bg-[#FAF8F5] rounded-lg border border-[#F2ECE1]">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-semibold text-[#1A2533]">{tb.type}</span>
+                      <span className="font-mono text-[11px] text-[#7A8696]">{tb.count} policies</span>
+                    </div>
+                    <div className="mt-2 text-base font-serif font-bold text-[#1A2533]">
+                      ₹{tb.premium.toLocaleString('en-IN')}
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="flex-1 bg-[#E7E2D6] h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className="bg-[#C05D34] h-full rounded-full transition-all"
+                          style={{ width: `${Math.min(100, tb.percent)}%` }}
+                        />
+                      </div>
+                      <span className="font-mono text-[10px] text-[#7A8696] w-6 text-right">
+                        {tb.percent}%
                       </span>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="bg-white border border-[#E7E2D6] rounded-xl p-5">
-              <h4 className="font-serif font-bold text-sm text-[#1A2533] pb-2 border-b border-[#F0EBE1]">
-                Sales Agent Production
-              </h4>
-              <div className="mt-4 space-y-2 text-xs">
-                {employees
-                  .filter((e) => e.role === 'SALESMAN')
-                  .map((sm) => {
-                    const smPolicies = policies.filter((p) => p.salesmanId?._id === sm._id || p.salesmanId === sm._id);
-                    const smPremium = smPolicies.reduce((a, b) => a + (Number(b.premium) || 0), 0);
-                    return (
-                      <div key={sm._id} className="flex justify-between items-center p-2 bg-[#FAF8F5] rounded">
-                        <div>
-                          <div className="font-semibold text-[#1A2533]">{sm.name}</div>
-                          <div className="text-[10px] text-[#7A8696] font-mono">{sm.salesmanCode || 'Agent'}</div>
-                        </div>
-                        <span className="font-mono font-bold text-[#1E7E34]">
-                          {smPolicies.length} policies · ₹{smPremium.toLocaleString('en-IN')}
-                        </span>
-                      </div>
-                    );
-                  })}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ========================================================= */}
       {/* SECTION 8: EMPLOYEES & SLOT CAPACITY                      */}
