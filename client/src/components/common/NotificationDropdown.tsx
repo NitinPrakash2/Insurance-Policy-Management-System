@@ -52,6 +52,24 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
     };
   }, [isOpen, onClose]);
 
+  // Lock background scroll on mobile when notifications are open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+    } else {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      document.body.style.touchAction = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      document.body.style.touchAction = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const getIcon = (type: NotificationItem['type']) => {
@@ -72,16 +90,16 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
   return (
     <>
-      {/* Mobile Backdrop Overlay */}
+      {/* Mobile Backdrop Overlay - touch-none completely freezes background swipe */}
       <div
-        className="fixed inset-0 bg-black/20 z-40 sm:hidden backdrop-blur-sm animate-in fade-in duration-100"
+        className="fixed inset-0 bg-black/25 z-40 sm:hidden backdrop-blur-sm touch-none select-none animate-in fade-in duration-100"
         onClick={onClose}
       />
 
       {/* Notification Dropdown Container */}
       <div
         ref={dropdownRef}
-        className="fixed inset-x-2 top-14 max-w-[420px] mx-auto sm:inset-auto sm:absolute sm:right-0 sm:top-full sm:mt-2 sm:w-[380px] sm:max-w-none sm:mx-0 bg-white border border-[#DDD7CB] rounded-xl shadow-[0_12px_36px_rgba(26,37,51,0.18)] z-50 overflow-hidden font-sans animate-in fade-in slide-in-from-top-2 duration-150"
+        className="fixed inset-x-2 top-14 max-w-[420px] mx-auto sm:inset-auto sm:absolute sm:right-0 sm:top-full sm:mt-2 sm:w-[380px] sm:max-w-none sm:mx-0 bg-white border border-[#DDD7CB] rounded-xl shadow-[0_12px_36px_rgba(26,37,51,0.18)] z-50 overflow-hidden font-sans animate-in fade-in slide-in-from-top-2 duration-150 touch-auto"
       >
         {/* Header */}
         <div className="px-3 sm:px-4 py-2.5 sm:py-3 bg-[#FAF8F5] border-b border-[#EAE4D8] flex items-center justify-between">
@@ -133,7 +151,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         </div>
 
         {/* Notifications Scroll List */}
-        <div className="max-h-[55vh] sm:max-h-[360px] overflow-y-auto divide-y divide-[#F2EDE2]">
+        <div className="max-h-[55vh] sm:max-h-[360px] overflow-y-auto overscroll-contain touch-pan-y divide-y divide-[#F2EDE2]">
           {filteredNotifs.length === 0 ? (
             <div className="py-8 sm:py-10 text-center px-4">
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#FAF8F5] border border-[#EAE4D8] mx-auto flex items-center justify-center text-[#A0AAB7] mb-2">

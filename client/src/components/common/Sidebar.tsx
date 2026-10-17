@@ -143,11 +143,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   React.useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
     } else {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      document.body.style.touchAction = '';
     }
     return () => {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      document.body.style.touchAction = '';
     };
   }, [isOpen]);
 
@@ -171,15 +177,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile Drawer Backdrop with Premium Frosted Blur */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-[#1A2533]/35 backdrop-blur-[6px] z-40 lg:hidden transition-all duration-300 animate-in fade-in"
+          className="fixed inset-0 bg-[#1A2533]/40 backdrop-blur-[6px] z-40 lg:hidden touch-none select-none transition-all duration-300 animate-in fade-in"
           onClick={onClose}
-          onTouchMove={(e) => e.preventDefault()}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={`w-[270px] sm:w-[260px] bg-[#FBF9F5] text-slate-700 flex flex-col h-[100dvh] max-h-[100dvh] fixed top-0 left-0 z-50 border-r border-[#E7E2D6] font-sans transition-transform duration-300 ease-in-out shadow-2xl overflow-hidden ${
+        className={`w-[270px] sm:w-[260px] bg-[#FBF9F5] text-slate-700 flex flex-col h-[100dvh] max-h-[100dvh] fixed top-0 left-0 z-50 border-r border-[#E7E2D6] font-sans transition-transform duration-300 ease-in-out shadow-2xl overflow-hidden touch-auto ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
