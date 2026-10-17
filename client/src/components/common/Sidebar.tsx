@@ -173,17 +173,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div
           className="fixed inset-0 bg-[#1A2533]/35 backdrop-blur-[6px] z-40 lg:hidden transition-all duration-300 animate-in fade-in"
           onClick={onClose}
+          onTouchMove={(e) => e.preventDefault()}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={`w-[260px] bg-[#FBF9F5] text-slate-700 flex flex-col h-screen fixed top-0 left-0 z-50 border-r border-[#E7E2D6] font-sans transition-transform duration-300 ease-in-out ${
+        className={`w-[270px] sm:w-[260px] bg-[#FBF9F5] text-slate-700 flex flex-col h-[100dvh] max-h-[100dvh] fixed top-0 left-0 z-50 border-r border-[#E7E2D6] font-sans transition-transform duration-300 ease-in-out shadow-2xl overflow-hidden ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         {/* Brand Header */}
-        <div className="px-5 py-4 border-b border-[#EAE4D8] flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-[#EAE4D8] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#C05D34] text-white flex items-center justify-center shrink-0 shadow-2xs">
               <Shield className="w-4.5 h-4.5 stroke-[2.2]" />
@@ -207,8 +208,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* Navigation */}
-        <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1">
+        {/* Navigation - min-h-0 enables smooth scrolling inside flex container */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-2.5 py-3 space-y-1 touch-pan-y">
           <div className="px-3 pt-1 pb-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
             {sectionHeading}
           </div>
@@ -253,7 +254,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Profile Footer (Matching Figma 1:1) */}
-      <div className="p-3 border-t border-[#EAE4D8] bg-[#FBF9F5] flex items-center justify-between">
+      <div className="p-3 border-t border-[#EAE4D8] bg-[#FBF9F5] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-800 font-semibold text-[11px] flex items-center justify-center shrink-0 border border-slate-300">
             {initials}
